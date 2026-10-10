@@ -1,0 +1,399 @@
+=== SLIDE 1 ===
+  [AUTO_SHAPE (1)] Project Review III
+  [PLACEHOLDER (14)] AI-Based Medical Representative
+  [AUTO_SHAPE (1)] Visit prioritization and route optimization
+  [AUTO_SHAPE (1)] A predictive, constraint-based planner that turns daily doctor-visit planning from guesswork into a data-driven decision.
+  [AUTO_SHAPE (1)] Bhakti Jayantilal Gundecha · 3071
+  [AUTO_SHAPE (1)] Parth Lokhande · 1020
+  [AUTO_SHAPE (1)] Udaykiran Bitla · 3056
+  [AUTO_SHAPE (1)] Group 19
+  [AUTO_SHAPE (1)] Guide: Prof. M. U. Buchade
+  [AUTO_SHAPE (1)] PVG's College of Engineering, Technology & Management, Pune
+  [AUTO_SHAPE (1)] Department of AI & Data Science
+=== SLIDE 2 ===
+  [AUTO_SHAPE (1)] Introduction
+  [PLACEHOLDER (14)] Problem statement
+  [AUTO_SHAPE (1)] Medical Representatives need to visit multiple doctors during a working day. Manual planning becomes difficult when the number of doctors increases and each doctor has different:
+  [AUTO_SHAPE (1)] Priority
+  [AUTO_SHAPE (1)] Availability
+  [AUTO_SHAPE (1)] Preferred visit time
+  [AUTO_SHAPE (1)] Visit duration
+  [AUTO_SHAPE (1)] Location
+  [AUTO_SHAPE (1)] Follow-up requirement
+  [AUTO_SHAPE (1)] Travel time
+  [AUTO_SHAPE (1)] Working-hour constraints
+  [AUTO_SHAPE (1)] Multiple doctors
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Different priorities
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Different time windows
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Different locations
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Limited MR working hours
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Manual planning
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 2
+=== SLIDE 3 ===
+  [AUTO_SHAPE (1)] Introduction
+  [PLACEHOLDER (14)] Abstract
+  [AUTO_SHAPE (1)] Medical Representatives (MRs) are required to plan multiple doctor visits within limited working hours, where doctor priority, availability, visit duration, geographical distance and travel time make manual planning difficult. This project proposes an AI-based web application for visit prioritization and route optimization.
+  [AUTO_SHAPE (1)] The system uses historical and operational data to estimate the priority of planned doctor visits using a Machine Learning model. The resulting priority information is combined with appointment time windows, visit duration, MR working hours and travel information. Google OR-Tools is then used to generate a feasible route using Vehicle Routing Problem with Time Windows (VRPTW) concepts.
+  [AUTO_SHAPE (1)] The system provides role-based dashboards for Medical Representatives and managers, enabling data-driven visit planning, monitoring and analysis.
+  [AUTO_SHAPE (1)] Keywords: Medical Representative, Machine Learning, Visit Prioritization, Route Optimization, VRPTW, Random Forest, Google OR-Tools
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 3
+=== SLIDE 4 ===
+  [AUTO_SHAPE (1)] Introduction
+  [PLACEHOLDER (14)] Why this project?
+  [AUTO_SHAPE (1)] Medical Representatives spend significant time in field activities.
+  [AUTO_SHAPE (1)] Doctor selection
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Appointment scheduling
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Travel planning
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Visit execution
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Follow-up
+  [AUTO_SHAPE (1)] The existing manual process creates three major challenges:
+  [AUTO_SHAPE (1)] 1
+  [AUTO_SHAPE (1)] Prioritization problem
+  [AUTO_SHAPE (1)] Which doctor should be visited first?
+  [AUTO_SHAPE (1)] 2
+  [AUTO_SHAPE (1)] Scheduling problem
+  [AUTO_SHAPE (1)] When can the doctor be visited?
+  [AUTO_SHAPE (1)] 3
+  [AUTO_SHAPE (1)] Routing problem
+  [AUTO_SHAPE (1)] In what sequence should doctors be visited?
+  [AUTO_SHAPE (1)] Visit priority → Machine Learning → “Who to prioritize?”
+  [AUTO_SHAPE (1)] Route sequence → Optimization → “Where and when to go?”
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 4
+=== SLIDE 5 ===
+  [AUTO_SHAPE (1)] Introduction
+  [PLACEHOLDER (14)] Existing system
+  [AUTO_SHAPE (1)] Manager / MR
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Select doctors
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Check availability
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Manually arrange visits
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Estimate travel
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Prepare daily schedule
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Visit doctors
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 5
+=== SLIDE 6 ===
+  [AUTO_SHAPE (1)] Background
+  [PLACEHOLDER (14)] Literature survey
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 6
+=== SLIDE 7 ===
+  [AUTO_SHAPE (1)] Background
+  [PLACEHOLDER (14)] Research gap
+  [AUTO_SHAPE (1)] Existing research commonly addresses physician targeting, sales representative planning, appointment scheduling, vehicle routing and field-service optimization. However, these areas are often treated as separate decision problems.
+  [AUTO_SHAPE (1)] Historical / operational data
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Visit prioritization (ML model)
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Priority information
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Appointment constraints + travel information
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Route optimization (OR-Tools)
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Daily visit schedule
+  [AUTO_SHAPE (1)] Research contribution: integration of data-driven visit prioritization with constraint-based route optimization in a single MR decision-support workflow.
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 7
+=== SLIDE 8 ===
+  [AUTO_SHAPE (1)] Proposed solution
+  [PLACEHOLDER (14)] Three intelligence layers
+  [AUTO_SHAPE (1)] Layer 1 · Prediction
+  [AUTO_SHAPE (1)] Machine learning
+  [AUTO_SHAPE (1)] Predict visit priority.
+  [AUTO_SHAPE (1)] “Which planned visit is more important?”
+  [AUTO_SHAPE (1)] Layer 2 · Optimization
+  [AUTO_SHAPE (1)] Google OR-Tools / VRPTW
+  [AUTO_SHAPE (1)] Generate a feasible route.
+  [AUTO_SHAPE (1)] “In what sequence should visits be performed?”
+  [AUTO_SHAPE (1)] Layer 3 · Application
+  [AUTO_SHAPE (1)] Web dashboard
+  [AUTO_SHAPE (1)] Allow MRs and managers to interact with the results.
+  [AUTO_SHAPE (1)] Agency data
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Data preprocessing
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Priority prediction + constraints
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Route optimization (OR-Tools)
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Optimized schedule
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] MR dashboard | Manager dashboard
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 8
+=== SLIDE 9 ===
+  [AUTO_SHAPE (1)] Proposed solution
+  [PLACEHOLDER (14)] Proposed methodology
+  [AUTO_SHAPE (1)] Phase 1
+  [AUTO_SHAPE (1)] Data collection
+  [AUTO_SHAPE (1)] Doctor, MR, historical visit, appointment, location and visit-outcome information; existing priority/category information, if available.
+  [AUTO_SHAPE (1)] Phase 2
+  [AUTO_SHAPE (1)] Data preprocessing
+  [AUTO_SHAPE (1)] Remove duplicates, handle missing values, validate coordinates, encode categorical features, normalize/transform where required, detect inconsistent records.
+  [AUTO_SHAPE (1)] Phase 3
+  [AUTO_SHAPE (1)] Machine learning
+  [AUTO_SHAPE (1)] Train priority prediction model.
+  [AUTO_SHAPE (1)] Phase 4
+  [AUTO_SHAPE (1)] Optimization
+  [AUTO_SHAPE (1)] Create travel-time matrix, distance matrix, time windows, visit duration and working-hour constraints. Then solve the routing problem.
+  [AUTO_SHAPE (1)] Phase 5
+  [AUTO_SHAPE (1)] Web application
+  [AUTO_SHAPE (1)] FastAPI + React + MySQL.
+  [AUTO_SHAPE (1)] Phase 6
+  [AUTO_SHAPE (1)] Evaluation
+  [AUTO_SHAPE (1)] Compare manual/baseline plan vs optimized plan.
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 9
+=== SLIDE 10 ===
+  [AUTO_SHAPE (1)] Design
+  [PLACEHOLDER (14)] System architecture
+  [PICTURE] pos=(812800,2794000) size=(10566400x3048000)
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 10
+=== SLIDE 11 ===
+  [AUTO_SHAPE (1)] Design
+  [PLACEHOLDER (14)] Data flow
+  [AUTO_SHAPE (1)] Suppose an MR logs in.
+  [AUTO_SHAPE (1)] MR login
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Select date
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Retrieve assigned doctors
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Retrieve appointment constraints
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] ML priority prediction
+  [AUTO_SHAPE (1)] Generate priority information
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Retrieve travel matrix
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Apply constraints
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] OR-Tools optimization
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Generate route
+  [AUTO_SHAPE (1)] Display: doctor · visit order · time · priority · travel time · distance
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 11
+=== SLIDE 12 ===
+  [AUTO_SHAPE (1)] Design
+  [PLACEHOLDER (14)] Data design
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 12
+=== SLIDE 13 ===
+  [AUTO_SHAPE (1)] Machine learning
+  [PLACEHOLDER (14)] ML priority prediction
+  [AUTO_SHAPE (1)] The model does not generate the route. It predicts the importance/priority of a planned doctor visit.
+  [AUTO_SHAPE (1)] Historical visit frequency
+  [AUTO_SHAPE (1)] Days since last visit
+  [AUTO_SHAPE (1)] Previous visit outcome
+  [AUTO_SHAPE (1)] Follow-up requirement
+  [AUTO_SHAPE (1)] Existing priority category
+  [AUTO_SHAPE (1)] Appointment status
+  [AUTO_SHAPE (1)] Doctor engagement indicator
+  [AUTO_SHAPE (1)] Visit history
+  [AUTO_SHAPE (1)] Territory information
+  [AUTO_SHAPE (1)] Other approved operational features
+  [AUTO_SHAPE (1)] Historical data
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Feature engineering
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Train/test split
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Random Forest classifier
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Predicted priority:
+  [AUTO_SHAPE (1)] High / Medium / Low
+  [AUTO_SHAPE (1)] The final ML formulation, classification or regression, will depend on the structure and reliability of the agency’s priority label.
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 13
+=== SLIDE 14 ===
+  [AUTO_SHAPE (1)] Machine learning
+  [PLACEHOLDER (14)] Feature engineering by example
+  [AUTO_SHAPE (1)] Doctor A
+  [AUTO_SHAPE (1)] Last visit: 25 days ago
+  [AUTO_SHAPE (1)] Frequent follow-up
+  [AUTO_SHAPE (1)] High historical priority
+  [AUTO_SHAPE (1)] Appointment confirmed
+  [AUTO_SHAPE (1)] Previous outcome requires follow-up
+  [AUTO_SHAPE (1)] The model may assign a high priority probability.
+  [AUTO_SHAPE (1)] Doctor B
+  [AUTO_SHAPE (1)] Recently visited
+  [AUTO_SHAPE (1)] No follow-up
+  [AUTO_SHAPE (1)] Low historical priority
+  [AUTO_SHAPE (1)] Flexible availability
+  [AUTO_SHAPE (1)] May receive a lower priority.
+  [AUTO_SHAPE (1)] These values are illustrative until the actual model is trained and evaluated.
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 14
+=== SLIDE 15 ===
+  [AUTO_SHAPE (1)] Optimization
+  [PLACEHOLDER (14)] Route optimization
+  [AUTO_SHAPE (1)] Vehicle Routing Problem with Time Windows (VRPTW). Locations: MR start, Doctors A–D, MR end.
+  [AUTO_SHAPE (1)] MR working hours
+  [AUTO_SHAPE (1)] Doctor availability
+  [AUTO_SHAPE (1)] Visit duration, travel time
+  [AUTO_SHAPE (1)] Location
+  [AUTO_SHAPE (1)] Appointment time window
+  [AUTO_SHAPE (1)] Number of available MRs
+  [PICTURE] pos=(4394200,2362838) size=(6985000x1968500)
+  [AUTO_SHAPE (1)] Route must be feasible, priority-aware, time-window compliant and efficient. OR-Tools needs a distance/time matrix: a map/routing API, organization-provided data, precomputed distances or a controlled simulation.
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 15
+=== SLIDE 16 ===
+  [AUTO_SHAPE (1)] Optimization
+  [PLACEHOLDER (14)] Optimization objective
+  [AUTO_SHAPE (1)] Minimize
+  [AUTO_SHAPE (1)] Travel time + Waiting time + Penalty for missing important visits
+  [AUTO_SHAPE (1)] Subject to
+  [AUTO_SHAPE (1)] Doctor availability
+  [AUTO_SHAPE (1)] MR working hours
+  [AUTO_SHAPE (1)] Visit duration
+  [AUTO_SHAPE (1)] Route feasibility
+  [AUTO_SHAPE (1)] Priority information can influence which visits are more valuable to serve.
+  [AUTO_SHAPE (1)] This is a simplified conceptual objective.
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 16
+=== SLIDE 17 ===
+  [AUTO_SHAPE (1)] Implementation
+  [PLACEHOLDER (14)] Algorithms and techniques used
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 17
+=== SLIDE 18 ===
+  [AUTO_SHAPE (1)] Implementation
+  [PLACEHOLDER (14)] Module split-up
+  [AUTO_SHAPE (1)] Module 1
+  [AUTO_SHAPE (1)] Authentication & role management
+  [AUTO_SHAPE (1)] Login, MR role, Manager role, access control
+  [AUTO_SHAPE (1)] Module 2
+  [AUTO_SHAPE (1)] Doctor management
+  [AUTO_SHAPE (1)] Doctor master, location, specialization, availability, visit duration
+  [AUTO_SHAPE (1)] Module 3
+  [AUTO_SHAPE (1)] MR management
+  [AUTO_SHAPE (1)] MR profile, territory, working hours, start/end location
+  [AUTO_SHAPE (1)] Module 4
+  [AUTO_SHAPE (1)] Visit & appointment management
+  [AUTO_SHAPE (1)] Create visit, appointment, reschedule, visit status, follow-up
+  [AUTO_SHAPE (1)] Module 5
+  [AUTO_SHAPE (1)] ML priority engine
+  [AUTO_SHAPE (1)] Data preprocessing, feature extraction, model prediction, priority output
+  [AUTO_SHAPE (1)] Module 6
+  [AUTO_SHAPE (1)] Route optimization
+  [AUTO_SHAPE (1)] Travel matrix, constraints, OR-Tools, optimized sequence
+  [AUTO_SHAPE (1)] Module 7
+  [AUTO_SHAPE (1)] MR dashboard
+  [AUTO_SHAPE (1)] Today's visits, priority, route, schedule, status
+  [AUTO_SHAPE (1)] Module 8
+  [AUTO_SHAPE (1)] Manager dashboard
+  [AUTO_SHAPE (1)] MR performance, planned/completed visits, priority visits, route analytics, reports
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 18
+=== SLIDE 19 ===
+  [AUTO_SHAPE (1)] Implementation
+  [PLACEHOLDER (14)] Proposed system UI
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 19
+=== SLIDE 20 ===
+  [AUTO_SHAPE (1)] Working modules
+  [PLACEHOLDER (14)] Working module: MR
+  [AUTO_SHAPE (1)] MR logs in
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Dashboard shows today's visits
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] System retrieves doctor/appointment data
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] ML model generates priority
+  [AUTO_SHAPE (1)] MR clicks Generate Optimized Route
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] OR-Tools processes
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] System produces route
+  [AUTO_SHAPE (1)] Priority + location + time windows + visit duration + MR working hours
+  [AUTO_SHAPE (1)] Route: 1 → Doctor A, 2 → Doctor B, 3 → Doctor C, 4 → Doctor D, with appointment times.
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 20
+=== SLIDE 21 ===
+  [AUTO_SHAPE (1)] Working modules
+  [PLACEHOLDER (14)] Working module: manager
+  [AUTO_SHAPE (1)] 12
+  [AUTO_SHAPE (1)] Total MRs
+  [AUTO_SHAPE (1)] 82
+  [AUTO_SHAPE (1)] Today's planned
+  [AUTO_SHAPE (1)] 61
+  [AUTO_SHAPE (1)] Completed
+  [AUTO_SHAPE (1)] 21
+  [AUTO_SHAPE (1)] Pending
+  [AUTO_SHAPE (1)] 19
+  [AUTO_SHAPE (1)] High priority
+  [AUTO_SHAPE (1)] XX%
+  [AUTO_SHAPE (1)] Completion rate
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 21
+=== SLIDE 22 ===
+  [AUTO_SHAPE (1)] Working modules
+  [PLACEHOLDER (14)] Complete working flow
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 22
+=== SLIDE 23 ===
+  [AUTO_SHAPE (1)] Implementation
+  [PLACEHOLDER (14)] Technology stack
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 23
+=== SLIDE 24 ===
+  [AUTO_SHAPE (1)] Implementation
+  [PLACEHOLDER (14)] Database design
+  [AUTO_SHAPE (1)] User
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] MR / Manager
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Visit ↔ Doctor
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Appointment
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Priority prediction
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Optimized route
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 24
+=== SLIDE 25 ===
+  [AUTO_SHAPE (1)] Evaluation
+  [PLACEHOLDER (14)] Evaluation
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 25
+=== SLIDE 26 ===
+  [AUTO_SHAPE (1)] Evaluation
+  [PLACEHOLDER (14)] Baseline comparison
+  [AUTO_SHAPE (1)] Same input
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Baseline plan | Proposed system
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Metrics
+  [AUTO_SHAPE (1)] →
+  [AUTO_SHAPE (1)] Comparison
+  [AUTO_SHAPE (1)] The actual values will come after experiments.
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 26
+=== SLIDE 27 ===
+  [AUTO_SHAPE (1)] Risks
+  [PLACEHOLDER (14)] Challenges and solutions
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 27
+=== SLIDE 28 ===
+  [AUTO_SHAPE (1)] Risks
+  [PLACEHOLDER (14)] Security and privacy
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 28
+=== SLIDE 29 ===
+  [AUTO_SHAPE (1)] Risks
+  [PLACEHOLDER (14)] Limitations
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 29
+=== SLIDE 30 ===
+  [AUTO_SHAPE (1)] Outlook
+  [PLACEHOLDER (14)] Future scope
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 30
+=== SLIDE 31 ===
+  [AUTO_SHAPE (1)] Progress
+  [PLACEHOLDER (14)] Current working status
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 31
+=== SLIDE 32 ===
+  [AUTO_SHAPE (1)] Progress
+  [PLACEHOLDER (14)] Semester-I partial report
+  [AUTO_SHAPE (1)] Semester-I deliverables
+  [AUTO_SHAPE (1)] Problem identification, topic finalization
+  [AUTO_SHAPE (1)] Literature survey, requirement analysis
+  [AUTO_SHAPE (1)] Dataset / data requirement analysis
+  [AUTO_SHAPE (1)] System architecture, technology and algorithm selection
+  [AUTO_SHAPE (1)] Database design, UI design, initial prototype
+  [AUTO_SHAPE (1)] Semester-II focus
+  [AUTO_SHAPE (1)] Group 19 · Project Review III · 32
