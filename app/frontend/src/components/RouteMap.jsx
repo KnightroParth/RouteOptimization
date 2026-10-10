@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { GoogleMap, useJsApiLoader, MarkerF, PolylineF, InfoWindowF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, PolylineF, InfoWindowF, DirectionsRenderer } from '@react-google-maps/api';
 
 const containerStyle = {
   width: '100%',
@@ -15,8 +15,37 @@ export default function RouteMap({ route, visits = [], center = { lat: 18.5204, 
   const [map, setMap] = useState(null);
   const [activeMarker, setActiveMarker] = useState(null);
 
-  const hasRoute = route?.route_polyline?.length > 0;
+  const hasRoute = route?.route_polyline?.length > 0 || route?.stops?.length > 0;
   const hasVisits = visits.length > 0;
+
+  const [directions, setDirections] = useState(null);
+
+  useEffect(() => {
+    if (!isLoaded || !hasRoute || !route.stops || route.stops.length < 2 || !window.google?.maps?.DirectionsService) return;
+    
+    const directionsService = new window.google.maps.DirectionsService();
+    const origin = { lat: Number(route.stops[0].latitude), lng: Number(route.stops[0].longitude) };
+    const destination = { lat: Number(route.stops[route.stops.length - 1].latitude), lng: Number(route.stops[route.stops.length - 1].longitude) };
+    
+    const waypoints = route.stops.slice(1, -1).map(stop => ({
+      location: { lat: Number(stop.latitude), lng: Number(stop.longitude) },
+      stopover: true
+    }));
+
+    directionsService.route(
+      {
+        origin: origin,
+        destination: destination,
+        waypoints: waypoints,
+        travelMode: window.google.maps.TravelMode.DRIVING
+      },
+      (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK) {
+          setDirections(result);
+        }
+      }
+    );
+  }, [route, hasRoute, isLoaded]);
 
   const allPositions = useMemo(() => {
     const positions = [];
@@ -65,11 +94,22 @@ export default function RouteMap({ route, visits = [], center = { lat: 18.5204, 
         onUnmount={onUnmount}
         options={{ disableDefaultUI: true, zoomControl: true }}
       >
-        {/* Route polyline */}
-        {hasRoute && (
+        {/* Real road directions */}
+        {hasRoute && directions && (
+          <DirectionsRenderer
+            directions={directions}
+            options={{
+              suppressMarkers: true,
+              polylineOptions: { strokeColor: '#2563eb', strokeWeight: 5, strokeOpacity: 0.8 }
+            }}
+          />
+        )}
+
+        {/* Fallback polyline if directions API fails */}
+        {hasRoute && !directions && route.route_polyline?.length > 0 && (
           <PolylineF
             path={allPositions}
-            options={{ strokeColor: '#18181b', strokeWeight: 4, strokeOpacity: 0.8 }}
+            options={{ strokeColor: '#18181b', strokeWeight: 4, strokeOpacity: 0.5 }}
           />
         )}
 
