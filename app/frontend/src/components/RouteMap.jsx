@@ -56,7 +56,7 @@ export default function RouteMap({ route, visits = [], center = { lat: 18.5204, 
   if (!isLoaded) return <div className="page-loader">Loading Maps...</div>;
 
   return (
-    <div className="map-container" style={{ width: '100%', height: '100%' }}>
+    <div className="map-container">
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
