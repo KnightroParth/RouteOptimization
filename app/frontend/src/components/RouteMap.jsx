@@ -1,148 +1,122 @@
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
-import { useEffect } from 'react';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { GoogleMap, useJsApiLoader, MarkerF, PolylineF, InfoWindowF } from '@react-google-maps/api';
 
-// Fix Leaflet default marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
+const containerStyle = {
+  width: '100%',
+  height: '100%'
+};
 
-// Numbered marker
-function createNumberedIcon(number, color = '#18181b') {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="
-      background:${color};color:white;width:28px;height:28px;
-      border-radius:50%;display:flex;align-items:center;justify-content:center;
-      font-size:12px;font-weight:600;font-family:Inter,sans-serif;
-      border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3);
-    ">${number}</div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+export default function RouteMap({ route, visits = [], center = { lat: 18.5204, lng: 73.8567 } }) {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDuPXC5543bzlypo_9p-scoIRxSasKCOjM',
   });
-}
 
-// Depot marker (start/end)
-function createDepotIcon() {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="
-      background:#22c55e;color:white;width:32px;height:32px;
-      border-radius:50%;display:flex;align-items:center;justify-content:center;
-      font-size:14px;font-weight:700;font-family:Inter,sans-serif;
-      border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3);
-    ">⌂</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-  });
-}
+  const [map, setMap] = useState(null);
+  const [activeMarker, setActiveMarker] = useState(null);
 
-// Auto-fit bounds
-function FitBounds({ positions }) {
-  const map = useMap();
-  useEffect(() => {
-    if (positions?.length > 1) {
-      const bounds = L.latLngBounds(positions);
-      map.fitBounds(bounds, { padding: [40, 40] });
-    }
-  }, [positions, map]);
-  return null;
-}
-
-export default function RouteMap({ route, visits = [], center = [18.5204, 73.8567] }) {
   const hasRoute = route?.route_polyline?.length > 0;
   const hasVisits = visits.length > 0;
 
-  // Collect all marker positions for bounds
-  const allPositions = [];
+  const allPositions = useMemo(() => {
+    const positions = [];
+    if (hasRoute) {
+      route.route_polyline.forEach(p => positions.push({ lat: p[0], lng: p[1] }));
+    } else if (hasVisits) {
+      visits.forEach(v => {
+        if (v.doctor_latitude && v.doctor_longitude) {
+          positions.push({ lat: v.doctor_latitude, lng: v.doctor_longitude });
+        }
+      });
+    }
+    return positions;
+  }, [route, visits, hasRoute, hasVisits]);
 
-  if (hasRoute) {
-    route.route_polyline.forEach((p) => allPositions.push(p));
-  } else if (hasVisits) {
-    visits.forEach((v) => {
-      if (v.doctor_latitude && v.doctor_longitude) {
-        allPositions.push([v.doctor_latitude, v.doctor_longitude]);
-      }
-    });
-  }
+  const onLoad = useCallback(function callback(map) {
+    if (allPositions.length > 1) {
+      const bounds = new window.google.maps.LatLngBounds();
+      allPositions.forEach(p => bounds.extend(p));
+      map.fitBounds(bounds);
+    }
+    setMap(map);
+  }, [allPositions]);
+
+  const onUnmount = useCallback(function callback(map) {
+    setMap(null);
+  }, []);
+
+  useEffect(() => {
+    if (map && allPositions.length > 1) {
+      const bounds = new window.google.maps.LatLngBounds();
+      allPositions.forEach(p => bounds.extend(p));
+      map.fitBounds(bounds);
+    }
+  }, [allPositions, map]);
+
+  if (!isLoaded) return <div className="page-loader">Loading Maps...</div>;
 
   return (
-    <div className="map-container">
-      <MapContainer center={center} zoom={13} style={{ width: '100%', height: '100%' }}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-
-        {allPositions.length > 1 && <FitBounds positions={allPositions} />}
-
+    <div className="map-container" style={{ width: '100%', height: '100%' }}>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={13}
+        onLoad={onLoad}
+        onUnmount={onUnmount}
+        options={{ disableDefaultUI: true, zoomControl: true }}
+      >
         {/* Route polyline */}
         {hasRoute && (
-          <Polyline
-            positions={route.route_polyline}
-            pathOptions={{ color: '#18181b', weight: 3, opacity: 0.7, dashArray: '8, 4' }}
+          <PolylineF
+            path={allPositions}
+            options={{ strokeColor: '#18181b', strokeWeight: 4, strokeOpacity: 0.8 }}
           />
         )}
 
         {/* Route stops */}
-        {hasRoute && route.stops?.map((stop) => (
-          <Marker
-            key={stop.sequence_number}
-            position={[stop.latitude, stop.longitude]}
-            icon={createNumberedIcon(stop.sequence_number)}
+        {hasRoute && route.stops?.map((stop, i) => (
+          <MarkerF
+            key={`stop-${stop.sequence_number}`}
+            position={{ lat: stop.latitude, lng: stop.longitude }}
+            label={{ text: String(stop.sequence_number), color: 'white', fontWeight: 'bold' }}
+            onClick={() => setActiveMarker(stop.sequence_number)}
           >
-            <Popup>
-              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13 }}>
-                <strong>{stop.doctor_name}</strong><br />
-                Arrival: {stop.estimated_arrival}<br />
-                Duration: {stop.service_duration} min<br />
-                {stop.priority_class && <>Priority: {stop.priority_class}</>}
-              </div>
-            </Popup>
-          </Marker>
+            {activeMarker === stop.sequence_number && (
+              <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
+                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#000' }}>
+                  <strong>{stop.doctor_name}</strong><br />
+                  Arrival: {stop.estimated_arrival}<br />
+                  Duration: {stop.service_duration} min<br />
+                  {stop.priority_class && <>Priority: {stop.priority_class}</>}
+                </div>
+              </InfoWindowF>
+            )}
+          </MarkerF>
         ))}
 
-        {/* Depot markers */}
-        {hasRoute && route.route_polyline?.length > 0 && (
-          <>
-            <Marker position={route.route_polyline[0]} icon={createDepotIcon()}>
-              <Popup>Start (Depot)</Popup>
-            </Marker>
-            {route.route_polyline.length > 1 && (
-              <Marker
-                position={route.route_polyline[route.route_polyline.length - 1]}
-                icon={createDepotIcon()}
-              >
-                <Popup>End (Depot)</Popup>
-              </Marker>
-            )}
-          </>
-        )}
-
-        {/* Fallback: show visit markers when no route */}
+        {/* Fallback visits */}
         {!hasRoute && hasVisits && visits.map((v, i) => {
           if (!v.doctor_latitude || !v.doctor_longitude) return null;
           return (
-            <Marker
-              key={v.id || i}
-              position={[v.doctor_latitude, v.doctor_longitude]}
-              icon={createNumberedIcon(i + 1)}
+            <MarkerF
+              key={`visit-${v.id || i}`}
+              position={{ lat: v.doctor_latitude, lng: v.doctor_longitude }}
+              label={{ text: String(i + 1), color: 'white', fontWeight: 'bold' }}
+              onClick={() => setActiveMarker(v.id || i)}
             >
-              <Popup>
-                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13 }}>
-                  <strong>{v.doctor_name}</strong><br />
-                  {v.doctor_specialization}<br />
-                  {v.priority_class && <>Priority: {v.priority_class}</>}
-                </div>
-              </Popup>
-            </Marker>
+              {activeMarker === (v.id || i) && (
+                <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#000' }}>
+                    <strong>{v.doctor_name}</strong><br />
+                    {v.doctor_specialization}<br />
+                    {v.priority_class && <>Priority: {v.priority_class}</>}
+                  </div>
+                </InfoWindowF>
+              )}
+            </MarkerF>
           );
         })}
-      </MapContainer>
+      </GoogleMap>
     </div>
   );
 }
