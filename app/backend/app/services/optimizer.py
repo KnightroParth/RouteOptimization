@@ -213,7 +213,7 @@ async def optimize_route(
     routing.AddDimension(
         transit_callback_index,
         120,  # max waiting time (minutes)
-        work_end - work_start + 120,  # max route duration
+        3000,  # max capacity (minutes since midnight)
         False,
         "Time",
     )
@@ -221,7 +221,13 @@ async def optimize_route(
 
     # Add time windows
     for i in range(n):
-        index = manager.NodeToIndex(i)
+        if i == 0:
+            index = manager.GetStartIndex(0)
+        elif i == n - 1:
+            index = manager.GetEndIndex(0)
+        else:
+            index = manager.NodeToIndex(i)
+            
         time_dimension.CumulVar(index).SetRange(
             time_windows[i][0], time_windows[i][1]
         )
