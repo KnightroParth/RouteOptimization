@@ -102,6 +102,19 @@ export default function RouteMap({ route, visits = [], center = { lat: 18.5204, 
           />
         )}
 
+        {/* Central Depot / Office Marker */}
+        {hasRoute && (
+          <MarkerF
+            position={{ lat: 18.5204, lng: 73.8567 }}
+            icon={{
+              url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+              scaledSize: new window.google.maps.Size(40, 40)
+            }}
+            label={{ text: 'HQ', color: 'white', fontWeight: 'bold', fontSize: '12px' }}
+            title="Headquarters / Starting Depot"
+          />
+        )}
+
         {/* Route stops */}
         {hasRoute && route.stops?.map((stop, i) => {
           // Check if the visit is completed. Since stops don't have status, we find the matching visit!
