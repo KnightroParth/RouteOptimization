@@ -6,6 +6,9 @@ import Login from './pages/Login';
 import MRDashboard from './pages/MRDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import DoctorList from './pages/DoctorList';
+import Visits from './pages/Visits';
+import RoutePage from './pages/RoutePage';
+import Analytics from './pages/Analytics';
 
 function DashboardRouter() {
   const { user } = useAuth();
@@ -56,7 +59,7 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['mr']}>
                 <AppLayout>
-                  <MRDashboard />
+                  <Visits />
                 </AppLayout>
               </ProtectedRoute>
             }
@@ -67,7 +70,18 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['mr']}>
                 <AppLayout>
-                  <MRDashboard />
+                  <RoutePage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                <AppLayout>
+                  <Analytics />
                 </AppLayout>
               </ProtectedRoute>
             }
