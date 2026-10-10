@@ -66,16 +66,25 @@ export const mockGeneratedRoute = {
   total_travel_time_min: 75,
   total_service_time_min: 170,
   algorithm: 'Google OR-Tools VRPTW + Random Forest ML Priority',
-  stops: [
-    { stop_number: 1, doctor_name: 'Dr. Ananya Roy', specialty: 'Cardiology', eta: '09:30 AM', etd: '09:55 AM', priority: 'High', lat: 19.0519, lng: 72.8295, address: 'Bandra West' },
-    { stop_number: 2, doctor_name: 'Dr. Rajesh Verma', specialty: 'Orthopedics', eta: '10:45 AM', etd: '11:10 AM', priority: 'High', lat: 19.0705, lng: 72.8339, address: 'Khar West' },
-    { stop_number: 3, doctor_name: 'Dr. Sunita Deshmukh', specialty: 'General Medicine', eta: '11:45 AM', etd: '12:05 PM', priority: 'Medium', lat: 19.1077, lng: 72.8361, address: 'Juhu' },
-    { stop_number: 4, doctor_name: 'Dr. Priya Nair', specialty: 'Pediatrics', eta: '01:30 PM', etd: '02:00 PM', priority: 'Medium', lat: 19.0988, lng: 72.8427, address: 'Vile Parle' },
-    { stop_number: 5, doctor_name: 'Dr. Amit Kulkarni', specialty: 'Neurology', eta: '03:30 PM', etd: '04:00 PM', priority: 'High', lat: 19.1312, lng: 72.8252, address: 'Andheri West' },
-    { stop_number: 6, doctor_name: 'Dr. Meera Iyer', specialty: 'Dermatology', eta: '04:30 PM', etd: '04:55 PM', priority: 'Medium', lat: 19.0833, lng: 72.8397, address: 'Santacruz' },
-    { stop_number: 7, doctor_name: 'Dr. Rohan Patel', specialty: 'Diabetology', eta: '05:30 PM', etd: '05:55 PM', priority: 'High', lat: 19.0222, lng: 72.8431, address: 'Dadar West' },
-    { stop_number: 8, doctor_name: 'Dr. Vikram Joshi', specialty: 'Oncology', eta: '06:30 PM', etd: '07:00 PM', priority: 'Low', lat: 19.0044, lng: 72.8429, address: 'Parel' },
+  route_polyline: [
+    [18.5204, 73.8567],
+    [18.514, 73.841],
+    [18.5089, 73.8259],
+    [18.504, 73.846],
+    [18.4988, 73.8678],
+    [18.517, 73.882],
+    [18.5362, 73.8970],
+    [18.549, 73.906],
+    [18.5618, 73.9169],
+    [18.541, 73.886],
+    [18.5204, 73.8567]
   ],
+  stops: [
+    { sequence_number: 1, doctor_id: '065ef4ce-8f7b-4a12-a1f2-42f4e173cce9', doctor_name: 'Dr. Priya Deshmukh', latitude: 18.5089, longitude: 73.8259, estimated_arrival: '10:00', travel_time_minutes: 15, service_duration: 30, priority_class: 'high' },
+    { sequence_number: 2, doctor_id: '88133fa4-2589-48f4-9806-410c0af56d11', doctor_name: 'Dr. Anil Mehta', latitude: 18.4988, longitude: 73.8678, estimated_arrival: '10:55', travel_time_minutes: 25, service_duration: 30, priority_class: 'high' },
+    { sequence_number: 3, doctor_id: 'd03f9f60-7819-4d09-8667-6ce4377b5126', doctor_name: 'Dr. Vikram Joshi', latitude: 18.5362, longitude: 73.897, estimated_arrival: '11:45', travel_time_minutes: 20, service_duration: 30, priority_class: 'high' },
+    { sequence_number: 4, doctor_id: '8374a4e9-c9a3-4db9-9c27-afc4767891d3', doctor_name: 'Dr. Sneha Kulkarni', latitude: 18.5618, longitude: 73.9169, estimated_arrival: '12:30', travel_time_minutes: 15, service_duration: 30, priority_class: 'medium' }
+  ]
 };
 
 export const mockManagerDashboard = {
