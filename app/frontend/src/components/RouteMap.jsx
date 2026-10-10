@@ -94,45 +94,41 @@ export default function RouteMap({ route, visits = [], center = { lat: 18.5204, 
         onUnmount={onUnmount}
         options={{ disableDefaultUI: true, zoomControl: true }}
       >
-        {/* Real road directions */}
-        {hasRoute && directions && (
-          <DirectionsRenderer
-            directions={directions}
-            options={{
-              suppressMarkers: true,
-              polylineOptions: { strokeColor: '#2563eb', strokeWeight: 5, strokeOpacity: 0.8 }
-            }}
-          />
-        )}
-
-        {/* Fallback polyline if directions API fails */}
-        {hasRoute && !directions && route.route_polyline?.length > 0 && (
+        {/* Beautiful Road-Snapped Polyline */}
+        {hasRoute && route.route_polyline?.length > 0 && (
           <PolylineF
             path={allPositions}
-            options={{ strokeColor: '#18181b', strokeWeight: 4, strokeOpacity: 0.5 }}
+            options={{ strokeColor: '#2563eb', strokeWeight: 5, strokeOpacity: 0.8 }}
           />
         )}
 
         {/* Route stops */}
-        {hasRoute && route.stops?.map((stop, i) => (
-          <MarkerF
-            key={`stop-${stop.sequence_number}`}
-            position={{ lat: stop.latitude, lng: stop.longitude }}
-            label={{ text: String(stop.sequence_number), color: 'white', fontWeight: 'bold' }}
-            onClick={() => setActiveMarker(stop.sequence_number)}
-          >
-            {activeMarker === stop.sequence_number && (
-              <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
-                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#000' }}>
-                  <strong>{stop.doctor_name}</strong><br />
-                  Arrival: {stop.estimated_arrival}<br />
-                  Duration: {stop.service_duration} min<br />
-                  {stop.priority_class && <>Priority: {stop.priority_class}</>}
-                </div>
-              </InfoWindowF>
-            )}
-          </MarkerF>
-        ))}
+        {hasRoute && route.stops?.map((stop, i) => {
+          // Check if the visit is completed. Since stops don't have status, we find the matching visit!
+          const matchingVisit = visits.find(v => v.doctor_name === stop.doctor_name);
+          const isCompleted = matchingVisit?.status === 'completed';
+          
+          return (
+            <MarkerF
+              key={`stop-${stop.sequence_number}`}
+              position={{ lat: Number(stop.latitude), lng: Number(stop.longitude) }}
+              icon={isCompleted ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'}
+              label={{ text: String(stop.sequence_number), color: 'white', fontWeight: 'bold' }}
+              onClick={() => setActiveMarker(stop.sequence_number)}
+            >
+              {activeMarker === stop.sequence_number && (
+                <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#000' }}>
+                    <strong>{stop.doctor_name}</strong><br />
+                    Arrival: {stop.estimated_arrival}<br />
+                    Duration: {stop.service_duration} min<br />
+                    {stop.priority_class && <>Priority: {stop.priority_class}</>}
+                  </div>
+                </InfoWindowF>
+              )}
+            </MarkerF>
+          );
+        })}
 
         {/* Fallback visits */}
         {!hasRoute && hasVisits && visits.map((v, i) => {
