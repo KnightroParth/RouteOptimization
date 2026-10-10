@@ -100,7 +100,8 @@ export default function RouteMap({ route, visits = [], center = { lat: 18.5204, 
           return (
             <MarkerF
               key={`visit-${v.id || i}`}
-              position={{ lat: v.doctor_latitude, lng: v.doctor_longitude }}
+              position={{ lat: Number(v.doctor_latitude), lng: Number(v.doctor_longitude) }}
+              icon={v.status === 'completed' ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'}
               label={{ text: String(i + 1), color: 'white', fontWeight: 'bold' }}
               onClick={() => setActiveMarker(v.id || i)}
             >
