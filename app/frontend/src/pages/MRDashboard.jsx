@@ -185,7 +185,7 @@ export default function MRDashboard() {
             <RouteMap
               route={route}
               visits={visits}
-              center={[18.5204, 73.8567]}
+              center={{ lat: 18.5204, lng: 73.8567 }}
             />
           </div>
         </div>
