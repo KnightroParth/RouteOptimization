@@ -25,9 +25,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 responses
+// Handle 401 responses and HTML responses (Vercel SPA fallback)
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    if (typeof res.data === 'string' && res.data.includes('<html')) {
+      return Promise.reject(new Error('Backend unavailable (HTML fallback)'));
+    }
+    return res;
+  },
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
@@ -67,7 +72,7 @@ export const authAPI = {
 
 // ── Doctors ─────────────────────────────────────────────
 export const doctorsAPI = {
-  list: (params) => withFallback(() => api.get('/doctors', { params }), mockDoctors),
+  list: (params) => withFallback(() => api.get('/doctors', { params }), { doctors: mockDoctors }),
   get: (id) => withFallback(() => api.get(`/doctors/${id}`), mockDoctors.find((d) => d.id === Number(id)) || mockDoctors[0]),
   create: (data) => api.post('/doctors', data),
   update: (id, data) => api.put(`/doctors/${id}`, data),
