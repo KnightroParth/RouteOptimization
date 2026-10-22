@@ -32,3 +32,23 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Archives & backups
+*.zip
+old_project_files/
+
+# Debug & test scripts (one-off utilities)
+app/backend/check_db.py
+app/backend/check_windows.py
+app/backend/debug_tw.py
+app/backend/get_coords.py
+app/backend/get_real_poly.py
+app/backend/test_live.py
+app/backend/test_optimizer.py
+app/backend/test_route.py
+
+# Documentation binaries (tracked via docs/ manually)
+docs/*.pptx
+docs/*.docx
+docs/*.pdf
+docs/update_ppt.py
