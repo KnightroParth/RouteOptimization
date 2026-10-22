@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Architecture & Diagram Explanation Guide | MR Route Optimization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --surface-border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --accent: #2563eb;
+      --tag-bg: #f1f5f9;
+      --border-radius: 12px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header & Banner ────────────────────────────────────── */
+    header.doc-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 60px 24px 50px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    h1.doc-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      letter-spacing: -0.025em;
+    }
+
+    p.doc-subtitle {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      max-width: 800px;
+      margin-bottom: 24px;
+    }
+
+    .meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.875rem;
+    }
+
+    .meta-pill {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+    }
+
+    .meta-pill strong {
+      color: #ffffff;
+    }
+
+    /* ── Layout & Grid ──────────────────────────────────────── */
+    .page-layout {
+      max-width: 1280px;
+      margin: 40px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      gap: 36px;
+      align-items: start;
+    }
+
+    /* ── Sidebar TOC ────────────────────────────────────────── */
+    aside.toc-sidebar {
+      position: sticky;
+      top: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+    }
+
+    .toc-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    ul.toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    ul.toc-list a {
+      color: #334155;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: block;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    ul.toc-list a:hover {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      transform: translateX(3px);
+    }
+
+    /* ── Main Content Area ──────────────────────────────────── */
+    main.doc-content {
+      min-width: 0;
+    }
+
+    .overview-card {
+      background: var(--card-bg);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--border-radius);
+      padding: 28px;
+      margin-bottom: 36px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .overview-card h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .catalog-item {
+      background: var(--tag-bg);
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      border-left: 3px solid var(--primary);
+    }
+
+    .catalog-item strong {
+      display: block;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    /* ── Section Cards (Each Figure) ────────────────────────── */
+    section.figure-card {
+      background: var(--card-bg);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--border-radius);
+      margin-bottom: 40px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    section.figure-card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .figure-header {
+      padding: 22px 28px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .figure-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .figure-num-badge {
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+    }
+
+    .figure-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .figure-file-tag {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      background: var(--tag-bg);
+      color: #475569;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* ── Image Presentation ─────────────────────────────────── */
+    .figure-img-container {
+      background: #f1f5f9;
+      padding: 24px;
+      text-align: center;
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .figure-img-container img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+      transition: transform 0.2s ease;
+    }
+
+    .figure-img-container img:hover {
+      transform: scale(1.01);
+    }
+
+    /* ── Figure Content Body ────────────────────────────────── */
+    .figure-body {
+      padding: 28px;
+    }
+
+    .figure-subsection {
+      margin-bottom: 24px;
+    }
+
+    .figure-subsection:last-child {
+      margin-bottom: 0;
+    }
+
+    .figure-subsection h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .figure-subsection h4::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 16px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .figure-subsection p {
+      color: #334155;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+
+    .figure-subsection ul, .figure-subsection ol {
+      margin-left: 20px;
+      margin-bottom: 14px;
+      color: #334155;
+      font-size: 0.95rem;
+    }
+
+    .figure-subsection li {
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    /* ── Math Box & Callouts ────────────────────────────────── */
+    .math-card {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #0f172a;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .viva-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-left: 4px solid #2563eb;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 14px;
+    }
+
+    .viva-box h5 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #1d4ed8;
+      margin-bottom: 6px;
+    }
+
+    .viva-box ul {
+      margin-left: 18px;
+      margin-bottom: 0;
+      font-size: 0.9rem;
+      color: #1e3a8a;
+    }
+
+    /* ── Code / Architecture Ascii Box ──────────────────────── */
+    pre.ascii-box {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 18px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.45;
+      overflow-x: auto;
+      margin: 16px 0;
+      border: 1px solid #334155;
+    }
+
+    /* ── Summary & Footer ───────────────────────────────────── */
+    footer.doc-footer {
+      background: #0f172a;
+      color: #94a3b8;
+      padding: 40px 24px;
+      text-align: center;
+      font-size: 0.9rem;
+      border-top: 1px solid #1e293b;
+      margin-top: 60px;
+    }
+
+    /* ── Responsive Rules ───────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .page-layout {
+        grid-template-columns: 1fr;
+      }
+      aside.toc-sidebar {
+        position: static;
+        max-height: none;
+      }
+    }
+
+    @media print {
+      body { background: #ffffff; }
+      header.doc-header { background: #ffffff; color: #000000; border-bottom: 2px solid #000; padding: 20px 0; }
+      .header-badge, .figure-num-badge { border: 1px solid #000; color: #000; background: none; }
+      aside.toc-sidebar { display: none; }
+      .page-layout { display: block; padding: 0; margin: 0; }
+      section.figure-card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 30px; }
+      .figure-img-container img { max-width: 90%; }
+      pre.ascii-box { background: #fff; color: #000; border: 1px solid #000; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Document Header -->
+  <header class="doc-header">
+    <div class="header-container">
+      <div class="header-badge">Project Review III · Technical Documentation</div>
+      <h1 class="doc-title">System Architecture & Diagram Explanation Guide</h1>
+      <p class="doc-subtitle">
+        Comprehensive academic and engineering documentation covering the 16 core architecture, behavioral, and data flow models for the Medical Representative Visit Prioritization & Route Optimization System.
+      </p>
+      <div class="meta-pills">
+        <div class="meta-pill"><strong>System:</strong> MR Route & Visit Engine</div>
+        <div class="meta-pill"><strong>Authors:</strong> Group 19</div>
+        <div class="meta-pill"><strong>Guide:</strong> Prof. M. U. Buchade</div>
+        <div class="meta-pill"><strong>Stack:</strong> React · FastAPI · PostgreSQL · Google OR-Tools</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="toc-sidebar">
+      <div class="toc-title">Diagram Catalog (16)</div>
+      <ul class="toc-list">
+        <li><a href="#fig01">Fig 1: Problem Context</a></li>
+        <li><a href="#fig02">Fig 2: Research Gap & Flow</a></li>
+        <li><a href="#fig03">Fig 3: Gantt Timeline</a></li>
+        <li><a href="#fig04">Fig 4: Task Network</a></li>
+        <li><a href="#fig05">Fig 5: SDLC Lifecycle</a></li>
+        <li><a href="#fig06">Fig 6: 4-Tier Architecture</a></li>
+        <li><a href="#fig07">Fig 7: Data Flow Pipeline</a></li>
+        <li><a href="#fig08">Fig 8: Use Case Diagram</a></li>
+        <li><a href="#fig09">Fig 9: MR Activity Diagram</a></li>
+        <li><a href="#fig10">Fig 10: Sequence Diagram</a></li>
+        <li><a href="#fig11">Fig 11: Class Diagram</a></li>
+        <li><a href="#fig12">Fig 12: ER Data Schema</a></li>
+        <li><a href="#fig13">Fig 13: State Machine</a></li>
+        <li><a href="#fig14">Fig 14: Component Diagram</a></li>
+        <li><a href="#fig15">Fig 15: Deployment Topology</a></li>
+        <li><a href="#fig16">Fig 16: ML Feature Pipeline</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="doc-content">
+
+      <!-- Executive Overview -->
+      <div class="overview-card">
+        <h2>System Architecture Overview</h2>
+        <p>
+          This guide provides an exhaustive technical and conceptual breakdown of the 16 architectural diagrams generated for the <strong>Medical Representative Visit Prioritization and Route Optimization System</strong>. The visual models provide end-to-end multi-tier coverage:
+        </p>
+        <div class="catalog-grid">
+          <div class="catalog-item">
+            <strong>Domain Modeling</strong>
+            Figures 1, 2, 8
+          </div>
+          <div class="catalog-item">
+            <strong>Project Engineering</strong>
+            Figures 3, 4, 5
+          </div>
+          <div class="catalog-item">
+            <strong>System Architecture</strong>
+            Figures 6, 7, 14, 15
+          </div>
+          <div class="catalog-item">
+            <strong>Behavior & Logic</strong>
+            Figures 9, 10, 13
+          </div>
+          <div class="catalog-item">
+            <strong>Structural Schemas</strong>
+            Figures 11, 12
+          </div>
+          <div class="catalog-item">
+            <strong>Scoring Pipeline</strong>
+            Figure 16
+          </div>
+        </div>
+      </div>
+
+      <!-- FIGURE 1 -->
+      <section id="fig01" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 01</span>
+            <h3 class="figure-title">Problem Context & Domain Challenges</h3>
+          </div>
+          <span class="figure-file-tag">fig01_problem_context.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig01_problem_context.png" alt="Figure 1: Problem Context & Domain Challenges">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Conceptual Description</h4>
+            <p>
+              Medical representatives in commercial pharmaceutical distribution operate under highly constrained, multi-variable daily environments. Figure 1 structures the fundamental domain bottleneck into four distinct operational input factors that converge onto the traditional manual planning approach:
+            </p>
+            <ul>
+              <li><strong>Multiple Doctors:</strong> Each MR is assigned 100–150 doctors across diverse medical specialties (Cardiology, Orthopedics, Pediatrics, General Medicine, Oncology).</li>
+              <li><strong>Varying Priorities:</strong> Doctors possess vastly different prescription volumes, time since last visit, and commercial value. Some require weekly detailing; others only monthly.</li>
+              <li><strong>Strict Time Windows:</strong> Clinics maintain tight consultation hours (e.g., 09:30–11:30 AM or 05:00–07:00 PM). Visiting outside these narrow slots results in refusal of entry.</li>
+              <li><strong>Dispersed Locations:</strong> Doctor clinics are geographically scattered across congested urban traffic zones, creating unpredictable travel overheads.</li>
+            </ul>
+          </div>
+          <div class="figure-subsection">
+            <h4>2. Failure Mode of Manual Planning</h4>
+            <p>
+              When field representatives rely on intuition, manual notebooks, or static spreadsheets, they cannot mentally co-optimize combinatorial constraints:
+            </p>
+            <div class="math-card">
+              Doctor Priority × Clinic Time Windows × Transit Distance × Max Working Shift
+            </div>
+            <p>
+              The resulting outcome is sub-optimal field execution: excessive criss-cross transit, long waiting in clinic lobbies, missed Tier-1 doctor visits, and high representative fatigue and burnout.
+            </p>
+          </div>
+          <div class="viva-box">
+            <h5>Viva / Defense Speaking Points</h5>
+            <ul>
+              <li><em>"Manual planning suffers from combinatorial explosion: with just 10 doctors, there are over 3.6 million possible permutations of visitation sequences."</em></li>
+              <li><em>"Without algorithmically bounded time windows, MRs frequently arrive during closed hours, wasting productive field time."</em></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 2 -->
+      <section id="fig02" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 02</span>
+            <h3 class="figure-title">Research Gap & End-to-End Integrated Framework</h3>
+          </div>
+          <span class="figure-file-tag">fig02_research_gap.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig02_research_gap.png" alt="Figure 2: Research Gap & End-to-End Integrated Framework">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Conceptual Description</h4>
+            <p>
+              Figure 2 illustrates the core intellectual and engineering contribution of this project: bridging the gap between data-driven visit prioritization and spatial routing optimization into a continuous automated closed loop.
+            </p>
+            <p>
+              Traditional literature and enterprise CRM software treat prioritization and vehicle routing as separate silos: CRM systems rank doctors statically without spatial awareness, while GPS routing engines optimize shortest paths without clinical priority or time windows.
+            </p>
+          </div>
+          <div class="figure-subsection">
+            <h4>2. Integrated Workflow Steps</h4>
+            <ol>
+              <li><strong>Historical & Visit Data:</strong> Database stores past visit histories, detailing notes, days elapsed, and prescriber tiers.</li>
+              <li><strong>ML Priority Engine:</strong> Evaluates multidimensional features using a trained Random Forest model to assign calibrated urgency scores (0.00 to 1.00).</li>
+              <li><strong>Operational Constraints:</strong> Doctor availability time windows, MR working hours, and inter-clinic distance/duration matrices.</li>
+              <li><strong>Google OR-Tools Solver:</strong> A Vehicle Routing Problem with Time Windows (VRPTW) mathematical engine calculates the optimal visitation sequence that maximizes high-priority coverage while minimizing total distance and wait time.</li>
+              <li><strong>Feasible Daily Schedule:</strong> Produces a sequenced, turn-by-turn itinerary with exact arrival times and departure deadlines.</li>
+              <li><strong>Role-Based Dashboards:</strong> Displays interactive Leaflet maps and actionable checklists for MRs, and territory compliance analytics for Area Sales Managers.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 3 -->
+      <section id="fig03" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 03</span>
+            <h3 class="figure-title">Project Gantt Timeline</h3>
+          </div>
+          <span class="figure-file-tag">fig03_gantt_timeline.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig03_gantt_timeline.png" alt="Figure 3: Project Gantt Timeline">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Conceptual Description</h4>
+            <p>
+              Figure 3 defines the 16-week academic project execution timeline across 8 structured milestones:
+            </p>
+            <ul>
+              <li><strong>Weeks 1–3:</strong> Problem Definition, Stakeholder Analysis & Comprehensive Literature Survey.</li>
+              <li><strong>Weeks 2–4:</strong> Software Requirements Specification (SRS) & Scope Freezing.</li>
+              <li><strong>Weeks 3–6:</strong> Relational Database Schema Design & Seed Data Generation.</li>
+              <li><strong>Weeks 5–8:</strong> Priority Model Formulation, Feature Engineering & Hyperparameter Tuning.</li>
+              <li><strong>Weeks 7–11:</strong> Google OR-Tools VRPTW Mathematical Formulation, Solver Integration & Heuristic Calibration.</li>
+              <li><strong>Weeks 8–13:</strong> Frontend React Dashboard (Vite, Leaflet, Responsive CSS) & FastAPI REST Endpoints.</li>
+              <li><strong>Weeks 11–15:</strong> End-to-End Pipeline Integration, Stress Testing & Urban Field Validation.</li>
+              <li><strong>Weeks 13–16:</strong> Technical Documentation, Final Report, Review III & Viva Defense.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 4 -->
+      <section id="fig04" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 04</span>
+            <h3 class="figure-title">Task Network & Dependency Architecture</h3>
+          </div>
+          <span class="figure-file-tag">fig04_task_network.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig04_task_network.png" alt="Figure 4: Task Network & Dependency Architecture">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Conceptual Description</h4>
+            <p>
+              Figure 4 models the project's critical path and architectural dependencies through tasks T1 through T7:
+            </p>
+            <ul>
+              <li><strong>T1 (Requirements & Scope):</strong> Unlocks schema design and domain constraints.</li>
+              <li><strong>T2 (Data Schema & Validation):</strong> Serves as the dual foundation for both model training (T3) and UI wireframing (T5).</li>
+              <li><strong>T3 (Priority Model) & T4 (Route Optimizer):</strong> Form the intelligence pipeline, feeding solved mathematical itineraries directly into Web Dashboards (T5).</li>
+              <li><strong>T6 (System Integration & E2E Tests):</strong> Validates API payloads, JWT tokens, and solver convergence before final Review III evaluation (T7).</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 5 -->
+      <section id="fig05" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 05</span>
+            <h3 class="figure-title">Software Development Life Cycle (SDLC) Model</h3>
+          </div>
+          <span class="figure-file-tag">fig05_sdlc_model.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig05_sdlc_model.png" alt="Figure 5: Software Development Life Cycle Model">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Conceptual Description</h4>
+            <p>
+              Figure 5 illustrates the <strong>Iterative Evolutionary Prototyping</strong> model adopted for this system:
+            </p>
+            <ol>
+              <li><strong>Requirements:</strong> Defining domain constraints (time windows, fuel limits, doctor availability).</li>
+              <li><strong>System Design:</strong> UML class/sequence diagrams, database normal forms, and REST contract schemas.</li>
+              <li><strong>Implementation:</strong> Python FastAPI backend, scikit-learn models, OR-Tools solver, and React SPA.</li>
+              <li><strong>Verification:</strong> Unit testing, solver feasibility boundary tests, and cross-validation of predictions.</li>
+              <li><strong>Review & Demo:</strong> Stakeholder review and feedback loop driving continuous algorithmic refinement.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 6 -->
+      <section id="fig06" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 06</span>
+            <h3 class="figure-title">4-Tier Enterprise System Architecture</h3>
+          </div>
+          <span class="figure-file-tag">fig06_architecture.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig06_architecture.png" alt="Figure 6: 4-Tier Enterprise System Architecture">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Conceptual Description</h4>
+            <p>
+              Figure 6 presents the enterprise-grade layered architecture of the deployed application, separating presentation from analytical compute:
+            </p>
+            <pre class="ascii-box">
+┌────────────────────────────────────────────────────────────────────────┐
+│ 1. PRESENTATION LAYER (React SPA / Leaflet Maps / Responsive UI)       │
+│    - MR Daily Execution Portal (Beat Checklist, Navigation, Logging)   │
+│    - Manager Performance Dashboard (Territory KPIs, Compliance)        │
+└────────────────────────────────────┬───────────────────────────────────┘
+                                     │ HTTPS / REST / JSON
+┌────────────────────────────────────▼───────────────────────────────────┐
+│ 2. APPLICATION & API GATEWAY LAYER (FastAPI Framework)                 │
+│    - REST Endpoints (/routes, /visits, /doctors, /auth)                │
+│    - JWT Security & Role-Based Access Control (RBAC)                   │
+│    - Service Orchestrator (Coordinates ML & Optimization Pipelines)    │
+└────────────────────────────────────┬───────────────────────────────────┘
+                                     │ Async Subsystem Dispatch
+┌────────────────────────────────────▼───────────────────────────────────┐
+│ 3. INTELLIGENCE CORE (Optimization & Machine Learning)                 │
+│    - Priority Scoring Engine (Random Forest / Feature Transformer)     │
+│    - Route Optimizer (Google OR-Tools VRPTW Solver Engine)             │
+└────────────────────────────────────┬───────────────────────────────────┘
+                                     │ SQL Alchemy / AsyncPG
+┌────────────────────────────────────▼───────────────────────────────────┐
+│ 4. PERSISTENCE & DATA ACCESS LAYER (Supabase Cloud PostgreSQL 15+)     │
+│    - Relational Storage (Users, Doctors, Appointments, Route Stops)    │
+│    - Precomputed Distance-Time Matrices & Historical Audit Logs        │
+└────────────────────────────────────────────────────────────────────────┘</pre>
+          </div>
+          <div class="figure-subsection">
+            <h4>2. Architectural Separation of Concerns</h4>
+            <ul>
+              <li>The <strong>Presentation Layer</strong> remains completely stateless, rendering interactive maps, stop sequences, and analytics.</li>
+              <li>The <strong>Gateway Layer</strong> validates incoming payloads, handles JWT token validation, and manages role permissions.</li>
+              <li>The <strong>Intelligence Core</strong> runs isolated from web server request-handling threads to prevent blocking during intensive mathematical matrix solving.</li>
+              <li>The <strong>Persistence Layer</strong> maintains relational integrity with strict foreign keys and geolocation indices.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 7 -->
+      <section id="fig07" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 07</span>
+            <h3 class="figure-title">End-to-End Data Flow Pipeline</h3>
+          </div>
+          <span class="figure-file-tag">fig07_data_flow.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig07_data_flow.png" alt="Figure 7: End-to-End Data Flow Pipeline">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Sequential Pipeline Stages</h4>
+            <p>Figure 7 traces the journey of a single user request from button press to map rendering:</p>
+            <ol>
+              <li><strong>MR Login:</strong> JWT authentication validates field representative identity and territory scope.</li>
+              <li><strong>Select Date & Territory:</strong> Representative selects target date (e.g., today's beat).</li>
+              <li><strong>Query Doctors & Appointments:</strong> Backend retrieves candidate doctors and scheduled consultation windows.</li>
+              <li><strong>Feature Engineering:</strong> Computes dynamic features (<em>recency</em>, <em>Rx_volume</em>, <em>conversion_rate</em>, <em>time_window</em>).</li>
+              <li><strong>Priority Scoring:</strong> Evaluates vector inputs to produce urgency classifications (<em>High</em>, <em>Medium</em>, <em>Low</em>).</li>
+              <li><strong>VRPTW Optimizer:</strong> Passes prioritized doctors and travel times into Google OR-Tools.</li>
+              <li><strong>Generate Route Plan:</strong> Computes an ordered sequence of stops with optimal ETAs and minimal total transit.</li>
+              <li><strong>Map Dashboard:</strong> Returns JSON payload to React frontend, which renders markers, polyline routes, and stop timelines.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 8 -->
+      <section id="fig08" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 08</span>
+            <h3 class="figure-title">UML Use Case Diagram</h3>
+          </div>
+          <span class="figure-file-tag">fig08_use_case.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig08_use_case.png" alt="Figure 8: UML Use Case Diagram">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Primary Actors & System Boundaries</h4>
+            <p><strong>Medical Representative (MR):</strong></p>
+            <ul>
+              <li>Authenticate & Sign In</li>
+              <li>View Today's Assigned Visits</li>
+              <li>Request Route Optimization</li>
+              <li>View Route on Map & Timeline</li>
+              <li>Log Visit Status (Pending → In-Progress → Completed / Rescheduled)</li>
+              <li>Transmit WhatsApp En-Route ETA Notifications</li>
+            </ul>
+            <p><strong>Field Sales Manager:</strong></p>
+            <ul>
+              <li>Authenticate & Sign In</li>
+              <li>Manage Doctor Master Database & Territory Assignments</li>
+              <li>Monitor Team Field Execution in Real Time</li>
+              <li>Review Territory Analytics, Fuel Savings, and Compliance KPIs</li>
+              <li>Export Audit Logs for Compliance Review</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 9 -->
+      <section id="fig09" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 09</span>
+            <h3 class="figure-title">MR Field Activity Diagram</h3>
+          </div>
+          <span class="figure-file-tag">fig09_activity_mr.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig09_activity_mr.png" alt="Figure 9: MR Field Activity Diagram">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Workflow Logic & Decision Gates</h4>
+            <p>Figure 9 tracks the field representative's physical execution loop:</p>
+            <ol>
+              <li><strong>Start:</strong> Field rep authenticates via the web portal at 08:30 AM.</li>
+              <li><strong>Fetch Schedule:</strong> Inspects today's prioritized candidate list.</li>
+              <li><strong>Generate Optimized Route:</strong> Triggers the solver, which locks the sequence based on morning clinic slots.</li>
+              <li><strong>Travel to Stop Location:</strong> Follows turn-by-turn map coordinates to Doctor <em>k</em>.</li>
+              <li><strong>Decision Diamond (Doctor Available?):</strong>
+                <ul>
+                  <li><strong>Yes:</strong> Representative conducts detailing session, hands over drug samples, and logs outcomes in the system.</li>
+                  <li><strong>No (Emergency surgery / clinic closed):</strong> Representative marks stop as <em>Missed/Delayed</em> with justification note.</li>
+                </ul>
+              </li>
+              <li><strong>Decision Diamond (More Stops in Daily Shift?):</strong>
+                <ul>
+                  <li><strong>Yes:</strong> Moves immediately to next scheduled waypoint in sequence.</li>
+                  <li><strong>No:</strong> Finishes daily beat route → triggers shift summary → End Day.</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 10 -->
+      <section id="fig10" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 10</span>
+            <h3 class="figure-title">UML Sequence Diagram</h3>
+          </div>
+          <span class="figure-file-tag">fig10_sequence_diagram.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig10_sequence_diagram.png" alt="Figure 10: UML Sequence Diagram">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Inter-Component Communication Lifelines</h4>
+            <p>Figure 10 formally models synchronous and asynchronous message exchanges:</p>
+            <ul>
+              <li><code>MR Actor</code> clicks <strong>Generate Route</strong> in <code>React Frontend</code>.</li>
+              <li><code>React Frontend</code> sends <code>POST /api/routes/generate</code> with JWT bearer token to <code>FastAPI Gateway</code>.</li>
+              <li><code>FastAPI Gateway</code> queries <code>Supabase DB</code> for assigned doctor coordinates and appointment availability windows.</li>
+              <li><code>Supabase DB</code> returns records to <code>FastAPI Gateway</code>.</li>
+              <li><code>FastAPI Gateway</code> dispatches feature vectors to <code>ML Engine</code> via <code>predict_priority(features)</code>.</li>
+              <li><code>ML Engine</code> returns priority classifications (<em>High</em>, <em>Medium</em>, <em>Low</em>) with confidence scores.</li>
+              <li><code>FastAPI Gateway</code> calls <code>solve_vrptw(matrix, windows, priorities)</code> on <code>OR-Tools Engine</code>.</li>
+              <li><code>OR-Tools Engine</code> solves the mathematical model and returns the optimal sequence with arrival timestamps.</li>
+              <li><code>FastAPI Gateway</code> executes <code>INSERT INTO routes, route_stops</code> in <code>Supabase DB</code> to persist the itinerary.</li>
+              <li><code>FastAPI Gateway</code> returns <code>HTTP 200 OK</code> with full GeoJSON polyline and stop schedule to <code>React Frontend</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 11 -->
+      <section id="fig11" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 11</span>
+            <h3 class="figure-title">UML Class Diagram</h3>
+          </div>
+          <span class="figure-file-tag">fig11_class_diagram.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig11_class_diagram.png" alt="Figure 11: UML Class Diagram">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Domain Entities & Object Relationships</h4>
+            <ul>
+              <li><strong>User:</strong> <code>user_id</code>, <code>email</code>, <code>role</code> (MR / Manager), <code>created_at</code>; methods: <code>authenticate()</code>, <code>get_profile()</code>.</li>
+              <li><strong>MedicalRep:</strong> <code>mr_id</code>, <code>user_id</code> (FK), <code>territory</code>, <code>max_daily_hours</code>; methods: <code>request_daily_route()</code>, <code>update_status()</code>. Cardinality with User is 1 : 0..1.</li>
+              <li><strong>Doctor:</strong> <code>doctor_id</code>, <code>specialty</code>, <code>lat</code>, <code>lon</code>, <code>window_start</code>, <code>window_end</code>; methods: <code>get_schedule()</code>, <code>is_available()</code>.</li>
+              <li><strong>PriorityPrediction:</strong> <code>pred_id</code>, <code>doctor_id</code> (FK), <code>priority_score</code>, <code>priority_class</code>; methods: <code>predict()</code>, <code>explain_factors()</code>. Cardinality with Doctor is 1 : N.</li>
+              <li><strong>Route:</strong> <code>route_id</code>, <code>mr_id</code> (FK), <code>plan_date</code>, <code>total_dist_km</code>, <code>total_time_min</code>; methods: <code>optimize_vrptw()</code>, <code>export_geojson()</code>. Cardinality with MedicalRep is 1 : N.</li>
+              <li><strong>RouteStop:</strong> <code>stop_id</code>, <code>route_id</code> (FK), <code>doctor_id</code> (FK), <code>sequence</code>, <code>eta</code>, <code>etd</code>; methods: <code>mark_visited()</code>, <code>log_outcome()</code>. Composition with Route (1 : 1..N) and association with PriorityPrediction (1 : 1).</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 12 -->
+      <section id="fig12" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 12</span>
+            <h3 class="figure-title">Entity-Relationship (ER) Schema</h3>
+          </div>
+          <span class="figure-file-tag">fig12_er_diagram.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig12_er_diagram.png" alt="Figure 12: Entity-Relationship Schema">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Relational Database Tables</h4>
+            <ul>
+              <li><strong>USERS:</strong> Primary key <code>user_id</code> (INT), <code>email</code> (VARCHAR), <code>password_hash</code> (VARCHAR), <code>role</code> (ENUM: 'mr', 'mgr'), <code>created_at</code> (TIMESTAMP).</li>
+              <li><strong>MEDICAL_REPS:</strong> Primary key <code>mr_id</code> (INT), Foreign key <code>user_id</code> → <code>USERS.user_id</code> (1 : 1), <code>territory_name</code>, <code>start_lat</code>, <code>start_lon</code>, <code>work_hours_limit</code>.</li>
+              <li><strong>DOCTORS:</strong> Primary key <code>doctor_id</code> (INT), <code>name</code>, <code>specialization</code>, <code>lat</code>, <code>lon</code> (DECIMAL), <code>avail_start</code>, <code>avail_end</code> (TIME), <code>visit_duration</code> (INT).</li>
+              <li><strong>PREDICTIONS:</strong> Primary key <code>pred_id</code> (INT), Foreign key <code>doctor_id</code> → <code>DOCTORS.doctor_id</code> (1 : N), <code>priority_score</code> (FLOAT), <code>priority_level</code> (VARCHAR), <code>model_version</code>.</li>
+              <li><strong>ROUTES:</strong> Primary key <code>route_id</code> (INT), Foreign key <code>mr_id</code> → <code>MEDICAL_REPS.mr_id</code> (1 : N), <code>plan_date</code> (DATE), <code>total_distance_km</code> (FLOAT), <code>total_duration_min</code> (FLOAT), <code>status</code> (ENUM).</li>
+              <li><strong>ROUTE_STOPS:</strong> Primary key <code>stop_id</code> (INT), Foreign key <code>route_id</code> → <code>ROUTES.route_id</code> (1 : N), Foreign key <code>doctor_id</code> → <code>DOCTORS.doctor_id</code>, <code>sequence_order</code> (INT), <code>est_arrival</code>, <code>departure</code> (TIME), <code>status</code> (ENUM).</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 13 -->
+      <section id="fig13" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 13</span>
+            <h3 class="figure-title">Route & Visit State Machine Diagram</h3>
+          </div>
+          <span class="figure-file-tag">fig13_state_diagram.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig13_state_diagram.png" alt="Figure 13: Route & Visit State Machine Diagram">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Lifecycle Transitions</h4>
+            <p>Figure 13 governs state integrity throughout the planning and execution lifecycle:</p>
+            <ul>
+              <li><strong>Draft Request:</strong> Initial parameter selection. If time windows conflict, transitions to <em>Validation Failed</em> → rep prompts parameter correction.</li>
+              <li><strong>Validated Plan:</strong> Input validated against operational boundaries → triggers solver.</li>
+              <li><strong>Optimizing Route:</strong> Active OR-Tools execution state.</li>
+              <li><strong>Scheduled:</strong> Optimal route generated, stored, and displayed on map.</li>
+              <li><strong>In Progress:</strong> Representative initiates field route; stops update dynamically.</li>
+              <li><strong>Completed:</strong> All scheduled appointments visited or resolved → shift summary locked.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 14 -->
+      <section id="fig14" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 14</span>
+            <h3 class="figure-title">Component Diagram</h3>
+          </div>
+          <span class="figure-file-tag">fig14_component_diagram.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig14_component_diagram.png" alt="Figure 14: Component Diagram">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Micro-Component Decoupling</h4>
+            <p>Figure 14 outlines clean separation between services:</p>
+            <ul>
+              <li><strong>React Web Application:</strong> Handles UI presentation, state, and Leaflet map rendering.</li>
+              <li><strong>FastAPI REST Server:</strong> Acts as controller gateway, verifying tokens and marshaling payloads.</li>
+              <li><strong>Priority Scoring Engine:</strong> Microservice exposing feature extraction and classification interfaces.</li>
+              <li><strong>Route Optimizer:</strong> Standalone OR-Tools solver component invoked via clean API abstraction.</li>
+              <li><strong>Persistence Module:</strong> Supabase ORM layer managing transactional consistency.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 15 -->
+      <section id="fig15" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 15</span>
+            <h3 class="figure-title">Physical Deployment Diagram</h3>
+          </div>
+          <span class="figure-file-tag">fig15_deployment_diagram.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig15_deployment_diagram.png" alt="Figure 15: Physical Deployment Diagram">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Production Topology</h4>
+            <p>Figure 15 details the modern cloud deployment infrastructure:</p>
+            <ul>
+              <li><strong>Client Browser Node (Desktop / Mobile):</strong> React SPA hosted on Vercel Edge with global CDN caching and HTTPS / TLS 1.3 encryption.</li>
+              <li><strong>FastAPI Application Server Node:</strong> Python 3.12 running inside a containerized Uvicorn ASGI instance on a cloud VM.</li>
+              <li><strong>Database Server Node:</strong> Managed PostgreSQL 15+ cluster hosted on Supabase Cloud via SSL Port 5432.</li>
+              <li><strong>Routing Matrix API Node:</strong> High-speed distance-duration matrix engine (OSRM / Maps Directions API) over HTTPS REST.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIGURE 16 -->
+      <section id="fig16" class="figure-card">
+        <div class="figure-header">
+          <div class="figure-header-left">
+            <span class="figure-num-badge">FIG 16</span>
+            <h3 class="figure-title">Feature & Scoring Pipeline</h3>
+          </div>
+          <span class="figure-file-tag">fig16_ml_pipeline.png</span>
+        </div>
+        <div class="figure-img-container">
+          <img src="diagrams/fig16_ml_pipeline.png" alt="Figure 16: Feature & Scoring Pipeline">
+        </div>
+        <div class="figure-body">
+          <div class="figure-subsection">
+            <h4>1. Data Transformation & Model Workflow</h4>
+            <p>Figure 16 breaks down the step-by-step scoring engine:</p>
+            <ol>
+              <li><strong>Raw Visit Data:</strong> Historical interaction logs, doctor visit dates, and detailing notes.</li>
+              <li><strong>Preprocessing:</strong> Handling missing values, standardizing dates, and one-hot encoding clinic specialties.</li>
+              <li><strong>Feature Pipeline:</strong> Generates 5 engineered metrics:
+                <ul>
+                  <li><em>Recency:</em> Days since previous detailing session (35% weight).</li>
+                  <li><em>Rx Potential:</em> Prescription volume tier (25% weight).</li>
+                  <li><em>Conversion Rate:</em> Historical responsiveness ratio (15% weight).</li>
+                  <li><em>Time Window Fit:</em> Feasibility of clinic consultation hours (15% weight).</li>
+                  <li><em>Specialty Alignment:</em> Strategic fit with active drug campaigns (10% weight).</li>
+                </ul>
+              </li>
+              <li><strong>Model Training:</strong> Random Forest classifier with 100 decision trees and 10-fold cross validation.</li>
+              <li><strong>Priority Classes:</strong> Emits calibrated probabilities mapped into three distinct operational tiers:
+                <ul>
+                  <li><strong>High Priority:</strong> Probability &gt; 0.70 (Mandatory inclusion in daily itinerary with high penalty factor if omitted).</li>
+                  <li><strong>Medium Priority:</strong> Probability 0.40 – 0.70 (Secondary stops scheduled if time window and transit budget permit).</li>
+                  <li><strong>Low Priority:</strong> Probability &lt; 0.40 (Deferred to subsequent weekly beat cycles).</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="doc-footer">
+    <p>Medical Representative (MR) Visit Prioritization & Route Optimization System</p>
+    <p style="margin-top: 6px; font-size: 0.8rem; color: #64748b;">
+      Project Review III Technical Evaluation & Documentation · Group 19
+    </p>
+  </footer>
+
+</body>
+</html>
