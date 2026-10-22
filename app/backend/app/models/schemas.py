@@ -71,6 +71,20 @@ class DoctorCreate(DoctorBase):
     pass
 
 
+class DoctorUpdate(BaseModel):
+    name: Optional[str] = None
+    specialization: Optional[str] = None
+    territory: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    availability_start: Optional[str] = None
+    availability_end: Optional[str] = None
+    typical_visit_duration: Optional[int] = None
+    priority_category: Optional[PriorityClass] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+
 class DoctorResponse(DoctorBase):
     id: str
     created_at: Optional[str] = None
@@ -128,6 +142,19 @@ class VisitStatusUpdate(BaseModel):
     outcome: Optional[str] = None
     actual_arrival: Optional[str] = None
     actual_departure: Optional[str] = None
+
+
+class VisitUpdate(BaseModel):
+    doctor_id: Optional[str] = None
+    mr_id: Optional[str] = None
+    visit_date: Optional[str] = None
+    planned_time: Optional[str] = None
+    actual_arrival: Optional[str] = None
+    actual_departure: Optional[str] = None
+    status: Optional[VisitStatus] = None
+    outcome: Optional[str] = None
+    notes: Optional[str] = None
+    follow_up_required: Optional[bool] = None
 
 
 # ── Priority Prediction ───────────────────────────────────────────────

@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 # Import and register routers
-from app.routes import auth, doctors, visits, routes as route_routes, dashboard, whatsapp
+from app.routes import auth, doctors, visits, routes as route_routes, dashboard, whatsapp, ml, settings, staff
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(doctors.router, prefix="/api/doctors", tags=["Doctors"])
@@ -34,6 +34,9 @@ app.include_router(visits.router, prefix="/api/visits", tags=["Visits"])
 app.include_router(route_routes.router, prefix="/api/routes", tags=["Routes"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
+app.include_router(ml.router, prefix="/api/ml", tags=["ML Predictions"])
+app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
+app.include_router(staff.router, prefix="/api/staff", tags=["Staff Management"])
 
 
 @app.get("/api/health")
