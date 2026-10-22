@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { dashboardAPI } from '../services/api';
 import {
   Users, CalendarDays, CheckCircle2, Clock,
-  AlertTriangle, Loader2, TrendingUp
+  AlertTriangle, Loader2, TrendingUp, UserCog, Stethoscope, ChevronRight
 } from 'lucide-react';
 
 export default function ManagerDashboard() {
@@ -49,7 +50,15 @@ export default function ManagerDashboard() {
       <div className="page-header">
         <div>
           <h2>Manager Dashboard</h2>
-          <p>Overview of all medical representative activities</p>
+          <p>Overview of team operations, medical representative allocation, and route performance</p>
+        </div>
+        <div className="page-header-actions" style={{ display: 'flex', gap: '10px' }}>
+          <Link to="/doctors" className="btn btn-secondary">
+            <Stethoscope size={15} /> Doctors Network
+          </Link>
+          <Link to="/staff" className="btn btn-primary">
+            <UserCog size={15} /> Manage Staff
+          </Link>
         </div>
       </div>
 
@@ -67,8 +76,11 @@ export default function ManagerDashboard() {
 
       {/* MR Performance Table */}
       <div className="card">
-        <div className="card-header">
-          <h3>MR Performance</h3>
+        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3>MR Field Representative Performance</h3>
+          <Link to="/staff" style={{ fontSize: '0.875rem', color: 'var(--primary-color, #2563eb)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
+            Manage Representatives <ChevronRight size={14} />
+          </Link>
         </div>
         <div className="card-body" style={{ padding: 0 }}>
           {stats?.mr_summaries?.length > 0 ? (
@@ -81,6 +93,7 @@ export default function ManagerDashboard() {
                   <th>Completed</th>
                   <th>Pending</th>
                   <th>Completion Rate</th>
+                  <th style={{ width: 100, textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,6 +112,27 @@ export default function ManagerDashboard() {
                       }}>
                         {mr.completion_rate}%
                       </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <Link
+                        to="/staff"
+                        className="btn-icon"
+                        title="Manage in Staff directory"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid #e2e8f0',
+                          background: '#fff',
+                          color: '#475569',
+                          fontSize: '0.8rem',
+                          textDecoration: 'none'
+                        }}
+                      >
+                        <UserCog size={13} /> Edit
+                      </Link>
                     </td>
                   </tr>
                 ))}

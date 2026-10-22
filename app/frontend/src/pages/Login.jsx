@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Brain, Route, Shield, Zap, BarChart3 } from 'lucide-react';
+import { MapPin, Target, Route, Shield, Clock, BarChart3 } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -37,11 +37,11 @@ export default function Login() {
   };
 
   const features = [
-    { icon: <Brain size={16} />, text: 'AI-powered visit priority prediction' },
+    { icon: <Target size={16} />, text: 'Data-driven visit priority scoring' },
     { icon: <Route size={16} />, text: 'OR-Tools optimized daily routes' },
     { icon: <MapPin size={16} />, text: 'Interactive route visualization' },
     { icon: <BarChart3 size={16} />, text: 'Performance analytics dashboards' },
-    { icon: <Zap size={16} />, text: 'Time-window aware scheduling' },
+    { icon: <Clock size={16} />, text: 'Time-window aware scheduling' },
     { icon: <Shield size={16} />, text: 'Role-based access control' },
   ];
 
@@ -66,8 +66,8 @@ export default function Login() {
             <span>Route Optimization</span>
           </h1>
           <p>
-            Intelligent prioritization of medical representative visits using
-            Machine Learning, with optimized daily routes via OR-Tools.
+            Intelligent prioritization of medical representative visits,
+            with optimized daily beat routes via OR-Tools.
           </p>
         </div>
 

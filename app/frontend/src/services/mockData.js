@@ -91,3 +91,10 @@ export const mockManagerDashboard = {
     { mr_id: 4, name: 'Arjun Das', territory: 'Navi Mumbai', planned: 7, completed: 6, pending: 1, compliance: 92 },
   ],
 };
+
+export const mockStaff = [
+  { user_id: 'demo-mr-1', mr_id: 'demo-mr-profile-1', name: 'Parth Lokhande', email: 'mr@demo.com', territory: 'Pune Central (Kothrud & Deccan Zone)', working_start: '09:30', working_end: '18:30', status: 'active', created_at: '2026-01-10T08:00:00Z' },
+  { user_id: 'demo-mr-2', mr_id: 'demo-mr-profile-2', name: 'Bhakti Gundecha', email: 'mr2@demo.com', territory: 'Pune East (Hadapsar & Wanowrie)', working_start: '09:00', working_end: '18:00', status: 'active', created_at: '2026-02-15T08:00:00Z' },
+  { user_id: 'demo-mr-3', mr_id: 'demo-mr-profile-3', name: 'Udaykiran Bitla', email: 'mr3@demo.com', territory: 'PCMC (Pimpri-Chinchwad)', working_start: '09:00', working_end: '17:30', status: 'active', created_at: '2026-03-05T08:00:00Z' },
+  { user_id: 'demo-mr-4', mr_id: 'demo-mr-profile-4', name: 'Pooja Tamboli', email: 'mr4@demo.com', territory: 'Pune North (Baner & Aundh)', working_start: '09:30', working_end: '18:00', status: 'inactive', created_at: '2026-04-20T08:00:00Z' },
+];

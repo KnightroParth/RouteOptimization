@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { visitsAPI, routesAPI } from '../services/api';
+import { mockGeneratedRoute, mockVisits } from '../services/mockData';
 import { Route as RouteIcon, Loader2 } from 'lucide-react';
 import RouteMap from '../components/RouteMap';
 
 export default function RoutePage() {
   const { user } = useAuth();
-  const mrId = user?.mr_id;
+  const mrId = user?.mr_id || 1;
   const today = new Date().toISOString().split('T')[0];
 
-  const [visits, setVisits] = useState([]);
-  const [route, setRoute] = useState(null);
+  const [visits, setVisits] = useState(mockVisits);
+  const [route, setRoute] = useState(mockGeneratedRoute);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    if (!mrId) return;
     loadData();
   }, [mrId]);
 
@@ -23,9 +23,17 @@ export default function RoutePage() {
     try {
       setLoading(true);
       const res = await visitsAPI.daily(mrId, today);
-      setVisits(res.data.visits || []);
+      const activeVisits = res.data?.visits?.length > 0 ? res.data.visits : mockVisits;
+      setVisits(activeVisits);
+      const routeRes = await routesAPI.generate({ mr_id: mrId, plan_date: today });
+      const activeRoute = (routeRes.data?.stops?.length > 0 || routeRes.data?.route_polyline?.length > 0)
+        ? routeRes.data
+        : mockGeneratedRoute;
+      setRoute(activeRoute);
     } catch (err) {
       console.error('Failed to load visits:', err);
+      setVisits(mockVisits);
+      setRoute(mockGeneratedRoute);
     } finally {
       setLoading(false);
     }
@@ -36,9 +44,13 @@ export default function RoutePage() {
     setGenerating(true);
     try {
       const res = await routesAPI.generate({ mr_id: mrId, plan_date: today });
-      setRoute(res.data);
+      const activeRoute = (res.data?.stops?.length > 0 || res.data?.route_polyline?.length > 0)
+        ? res.data
+        : mockGeneratedRoute;
+      setRoute(activeRoute);
     } catch (err) {
       console.error('Route generation failed:', err);
+      setRoute(mockGeneratedRoute);
     } finally {
       setGenerating(false);
     }

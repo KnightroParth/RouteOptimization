@@ -14,7 +14,12 @@ export function AuthProvider({ children }) {
     if (savedToken && savedUser) {
       setToken(savedToken);
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        if (parsed.role === 'manager' || parsed.email === 'manager@demo.com' || parsed.name === 'Prof. M. U. Buchade') {
+          parsed.name = 'Rajesh Mehta';
+          localStorage.setItem('user', JSON.stringify(parsed));
+        }
+        setUser(parsed);
       } catch {
         localStorage.removeItem('user');
       }
@@ -25,6 +30,9 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await authAPI.login(email, password);
     const { access_token, user: userData } = res.data;
+    if (userData.role === 'manager' || userData.email === 'manager@demo.com' || userData.name === 'Prof. M. U. Buchade') {
+      userData.name = 'Rajesh Mehta';
+    }
     setToken(access_token);
     setUser(userData);
     localStorage.setItem('token', access_token);
