@@ -43,7 +43,7 @@ demo_users = [
     {
         "email": "manager@demo.com",
         "password_hash": hash_password("demo123"),
-        "name": "Prof. M. U. Buchade",
+        "name": "Rajesh Mehta",
         "role": "manager",
     },
 ]

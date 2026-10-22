@@ -1,7 +1,7 @@
 """Doctor management endpoints."""
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Optional
-from app.models.schemas import DoctorCreate, DoctorResponse
+from app.models.schemas import DoctorCreate, DoctorResponse, DoctorUpdate
 from app.auth.jwt_handler import get_current_user
 from app.db import get_supabase
 
@@ -51,13 +51,14 @@ async def create_doctor(doctor: DoctorCreate, user: dict = Depends(get_current_u
 
 @router.put("/{doctor_id}")
 async def update_doctor(
-    doctor_id: str, doctor: DoctorCreate, user: dict = Depends(get_current_user)
+    doctor_id: str, doctor: DoctorUpdate, user: dict = Depends(get_current_user)
 ):
     """Update an existing doctor record."""
     sb = get_supabase()
+    update_data = {k: v for k, v in doctor.model_dump().items() if v is not None}
     result = (
         sb.table("doctors")
-        .update(doctor.model_dump())
+        .update(update_data)
         .eq("id", doctor_id)
         .execute()
     )

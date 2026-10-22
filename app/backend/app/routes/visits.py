@@ -1,7 +1,7 @@
 """Visit management endpoints."""
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Optional
-from app.models.schemas import VisitCreate, VisitResponse, VisitStatusUpdate
+from app.models.schemas import VisitCreate, VisitResponse, VisitStatusUpdate, VisitUpdate
 from app.auth.jwt_handler import get_current_user
 from app.db import get_supabase
 
@@ -123,3 +123,39 @@ async def update_visit_status(
     if not result.data:
         raise HTTPException(status_code=404, detail="Visit not found")
     return result.data[0]
+
+
+@router.put("/{visit_id}")
+async def update_visit(
+    visit_id: str,
+    update: VisitUpdate,
+    user: dict = Depends(get_current_user),
+):
+    """Full update of a visit record."""
+    sb = get_supabase()
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    if "status" in update_data and hasattr(update_data["status"], "value"):
+        update_data["status"] = update_data["status"].value
+
+    result = (
+        sb.table("visits")
+        .update(update_data)
+        .eq("id", visit_id)
+        .execute()
+    )
+
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Visit not found")
+    return result.data[0]
+
+
+@router.delete("/{visit_id}", status_code=204)
+async def delete_visit(
+    visit_id: str,
+    user: dict = Depends(get_current_user),
+):
+    """Delete a visit record."""
+    sb = get_supabase()
+    sb.table("visits").delete().eq("id", visit_id).execute()
+    return None
+
