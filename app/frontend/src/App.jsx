@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -6,17 +7,17 @@ import Sidebar from './components/Sidebar';
 import MobileNav from './components/MobileNav';
 
 // Pages
-import Login from './pages/Login';
-import MRDashboard from './pages/MRDashboard';
-import ManagerDashboard from './pages/ManagerDashboard';
-import DoctorList from './pages/DoctorList';
-import MLPredictions from './pages/MLPredictions';
-import RoutePlanning from './pages/RoutePlanning';
-import VisitHistory from './pages/VisitHistory';
-import WhatsApp from './pages/WhatsApp';
-import Settings from './pages/Settings';
-import Analytics from './pages/Analytics';
-import ManageStaff from './pages/ManageStaff';
+const Login = lazy(() => import('./pages/Login'));
+const MRDashboard = lazy(() => import('./pages/MRDashboard'));
+const ManagerDashboard = lazy(() => import('./pages/ManagerDashboard'));
+const DoctorList = lazy(() => import('./pages/DoctorList'));
+const MLPredictions = lazy(() => import('./pages/MLPredictions'));
+const RoutePlanning = lazy(() => import('./pages/RoutePlanning'));
+const VisitHistory = lazy(() => import('./pages/VisitHistory'));
+const WhatsApp = lazy(() => import('./pages/WhatsApp'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const ManageStaff = lazy(() => import('./pages/ManageStaff'));
 
 function DashboardRouter() {
   const { user } = useAuth();
@@ -51,7 +52,24 @@ export default function App() {
   return (
     <HashRouter>
       <AuthProvider>
-        <Routes>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: 'rgba(15, 23, 42, 0.95)',
+              color: '#e2e8f0',
+              border: '1px solid rgba(99, 102, 241, 0.2)',
+              borderRadius: '10px',
+              backdropFilter: 'blur(12px)',
+              fontSize: '13px',
+            },
+            success: { iconTheme: { primary: '#10b981', secondary: '#0f172a' } },
+            error: { iconTheme: { primary: '#ef4444', secondary: '#0f172a' }, duration: 5000 },
+          }}
+        />
+        <Suspense fallback={<div className="page-loader">Loading...</div>}>
+          <Routes>
           <Route path="/login" element={<Login />} />
 
           {/* Unified Dashboard (MR & Manager) */}
@@ -165,7 +183,8 @@ export default function App() {
           {/* Root and Fallback redirects */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </AuthProvider>
     </HashRouter>
   );

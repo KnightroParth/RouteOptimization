@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { visitsAPI, routesAPI } from '../services/api';
-import { mockGeneratedRoute, mockVisits } from '../services/mockData';
 import {
   Route as RouteIcon, Navigation, Sliders, CheckCircle2,
   Clock, Fuel, MapPin, Loader2, AlertCircle
@@ -22,15 +21,16 @@ export default function RoutePlanning() {
     avgServiceTimeMins: 20,
   });
 
-  const [visits, setVisits] = useState(mockVisits);
-  const [route, setRoute] = useState(mockGeneratedRoute);
+  const [visits, setVisits] = useState([]);
+  const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(true);
   const [solving, setSolving] = useState(false);
+  const [error, setError] = useState('');
   const [solveStats, setSolveStats] = useState({
-    status: 'Optimal route discovered',
-    solveTimeMs: 45,
-    distanceKm: 21.8,
-    fuelLiters: 0.65,
+    status: 'Not run',
+    solveTimeMs: 0,
+    distanceKm: 0,
+    fuelLiters: 0,
   });
 
   useEffect(() => {
@@ -41,26 +41,24 @@ export default function RoutePlanning() {
     try {
       setLoading(true);
       const res = await visitsAPI.daily(mrId, today);
-      const activeVisits = res.data?.visits?.length > 0 ? res.data.visits : mockVisits;
-      setVisits(activeVisits);
+      setVisits(res.data?.visits || []);
       
       const routeRes = await routesAPI.generate({ mr_id: mrId, plan_date: today });
-      const activeRoute = (routeRes.data?.stops?.length > 0 || routeRes.data?.route_polyline?.length > 0)
-        ? routeRes.data
-        : mockGeneratedRoute;
-      setRoute(activeRoute);
+      setRoute(routeRes.data || null);
+      setError('');
 
-      const dist = activeRoute.total_distance_km || 21.8;
+      const dist = routeRes.data?.total_distance_km || 0;
       setSolveStats({
-        status: 'Optimal route discovered',
-        solveTimeMs: 58,
+        status: routeRes.data?.solver_status || 'error',
+        solveTimeMs: 0,
         distanceKm: dist,
         fuelLiters: (dist * 0.03).toFixed(2),
       });
     } catch (err) {
-      console.warn('Using demo data fallback:', err);
-      setVisits(mockVisits);
-      setRoute(mockGeneratedRoute);
+      console.error('Failed to load route planning data:', err);
+      setError('Unable to load route planning data from the server.');
+      setVisits([]);
+      setRoute(null);
     } finally {
       setLoading(false);
     }
@@ -83,16 +81,18 @@ export default function RoutePlanning() {
         ...params,
       });
       setRoute(res.data);
-      const dist = res.data.total_distance_km || 28.4;
+      setError('');
+      const dist = res.data.total_distance_km || 0;
       setSolveStats({
-        status: 'Optimal route discovered',
-        solveTimeMs: Math.floor(Math.random() * 40 + 40),
+        status: res.data.solver_status || 'error',
+        solveTimeMs: 0,
         distanceKm: dist,
         fuelLiters: (dist * 0.03).toFixed(2),
       });
     } catch (err) {
       console.error('Failed to solve route:', err);
-      setSolveStats((prev) => ({ ...prev, status: 'Solved (local heuristics applied)' }));
+      setError('Route optimization failed. Review the constraints and try again.');
+      setSolveStats((prev) => ({ ...prev, status: 'error' }));
     } finally {
       setSolving(false);
     }
@@ -114,6 +114,8 @@ export default function RoutePlanning() {
           <p>Vehicle Routing Problem with Time Windows solved via Google OR-Tools optimization engine</p>
         </div>
       </div>
+
+      {error && <div className="alert-error-banner mb-4">{error}</div>}
 
       {/* Solver Configuration Form */}
       <div className="card mb-4">

@@ -98,13 +98,26 @@ def predict_priority(visit: dict) -> dict:
     """
     if _model is not None:
         try:
-            # Extract features in the expected order
+            # Encode prescription_volume to numeric
+            rx_map = {"low": 0, "medium": 1, "high": 2}
+            rx_raw = visit.get("prescription_volume", "medium")
+            rx_encoded = rx_map.get(rx_raw, 1) if isinstance(rx_raw, str) else 1
+
+            # Determine specialty alignment
+            spec = (visit.get("doctor_specialization") or "").lower()
+            high_value = {"cardiology", "oncology", "neurology", "orthopedics"}
+            spec_aligned = 1 if spec in high_value else 0
+
+            # Feature vector must match train_model.py FEATURE_COLS exactly:
+            # [days_since_last_visit, visit_frequency, follow_up_required,
+            #  prescription_volume_encoded, engagement_score, specialty_alignment]
             features = np.array([
-                visit.get("days_since_last_visit", 30),
-                visit.get("visit_frequency", 1),
+                visit.get("days_since_last_visit", 90),
+                visit.get("visit_frequency", 0),
                 1 if visit.get("follow_up_required") else 0,
-                visit.get("prescription_volume", 50),
+                rx_encoded,
                 visit.get("engagement_score", 0.5),
+                spec_aligned,
             ])
             return _ml_priority(features)
         except Exception:

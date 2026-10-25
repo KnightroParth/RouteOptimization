@@ -12,19 +12,45 @@ router = APIRouter()
 async def list_doctors(
     territory: Optional[str] = Query(None),
     specialization: Optional[str] = Query(None),
+    search: Optional[str] = Query(None, description="Search by doctor name"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(50, ge=1, le=200, description="Results per page"),
     user: dict = Depends(get_current_user),
 ):
-    """List doctors, optionally filtered by territory or specialization."""
+    """List doctors with optional filtering, search, and pagination."""
     sb = get_supabase()
-    query = sb.table("doctors").select("*")
+
+    # Count query (for pagination metadata)
+    count_query = sb.table("doctors").select("id", count="exact")
+    # Data query
+    data_query = sb.table("doctors").select("*")
 
     if territory:
-        query = query.eq("territory", territory)
+        count_query = count_query.eq("territory", territory)
+        data_query = data_query.eq("territory", territory)
     if specialization:
-        query = query.eq("specialization", specialization)
+        count_query = count_query.eq("specialization", specialization)
+        data_query = data_query.eq("specialization", specialization)
+    if search:
+        count_query = count_query.ilike("name", f"%{search}%")
+        data_query = data_query.ilike("name", f"%{search}%")
 
-    result = query.order("name").execute()
-    return {"doctors": result.data or []}
+    # Get total count
+    count_result = count_query.execute()
+    total = count_result.count if count_result.count is not None else len(count_result.data or [])
+
+    # Apply pagination
+    offset = (page - 1) * limit
+    data_query = data_query.order("name").range(offset, offset + limit - 1)
+    result = data_query.execute()
+
+    return {
+        "doctors": result.data or [],
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": max(1, (total + limit - 1) // limit),
+    }
 
 
 @router.get("/{doctor_id}")

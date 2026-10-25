@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { settingsAPI } from '../services/api';
 import {
   Sliders, User, Clock, ShieldCheck, CheckCircle2,
   Navigation, Fuel, Bell, Save
@@ -8,6 +9,8 @@ import {
 export default function Settings() {
   const { user } = useAuth();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
     fullName: user?.name || 'Parth Lokhande',
@@ -27,6 +30,38 @@ export default function Settings() {
     whatsappAlerts: true,
   });
 
+  useEffect(() => {
+    let active = true;
+    settingsAPI.getProfile()
+      .then((response) => {
+        if (!active) return;
+        const preferences = response.data?.preferences;
+        if (!preferences) return;
+        setFormData((previous) => ({
+          ...previous,
+          fullName: preferences.full_name || previous.fullName,
+          repId: preferences.rep_id || previous.repId,
+          territory: preferences.territory || previous.territory,
+          vehicle: preferences.vehicle || previous.vehicle,
+          startLocation: preferences.start_location || previous.startLocation,
+          shiftStart: preferences.shift_start || previous.shiftStart,
+          shiftEnd: preferences.shift_end || previous.shiftEnd,
+          avgVisitTime: String(preferences.avg_visit_time ?? previous.avgVisitTime),
+          lunchStart: preferences.lunch_start || previous.lunchStart,
+          lunchEnd: preferences.lunch_end || previous.lunchEnd,
+          targetVisits: preferences.target_visits ?? previous.targetVisits,
+          optStrategy: preferences.opt_strategy || previous.optStrategy,
+          autoCarryover: preferences.auto_carryover ?? previous.autoCarryover,
+          trafficReroute: preferences.traffic_reroute ?? previous.trafficReroute,
+          whatsappAlerts: preferences.whatsapp_alerts ?? previous.whatsappAlerts,
+        }));
+      })
+      .catch(() => {
+        if (active) setError('Unable to load preferences from the server.');
+      });
+    return () => { active = false; };
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -35,10 +70,33 @@ export default function Settings() {
     }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    setError('');
+    try {
+      await settingsAPI.updateProfile({
+        territory: formData.territory,
+        vehicle: formData.vehicle,
+        start_location: formData.startLocation,
+        shift_start: formData.shiftStart,
+        shift_end: formData.shiftEnd,
+        avg_visit_time: Number(formData.avgVisitTime),
+        lunch_start: formData.lunchStart,
+        lunch_end: formData.lunchEnd,
+        target_visits: Number(formData.targetVisits),
+        opt_strategy: formData.optStrategy,
+        auto_carryover: formData.autoCarryover,
+        traffic_reroute: formData.trafficReroute,
+        whatsapp_alerts: formData.whatsappAlerts,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setError('Unable to save preferences. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -56,9 +114,10 @@ export default function Settings() {
             type="button" 
             className="btn btn-primary"
             onClick={handleSave}
+            disabled={saving}
           >
             <Save size={14} />
-            Save Preferences
+            {saving ? 'Saving...' : 'Save Preferences'}
           </button>
         </div>
       </div>
@@ -69,6 +128,8 @@ export default function Settings() {
           <span>Operational preferences saved and synchronized with routing solver.</span>
         </div>
       )}
+
+      {error && <div className="alert-error-banner mb-4">{error}</div>}
 
       {/* 1. Profile & Territory */}
       <div className="card mb-4">

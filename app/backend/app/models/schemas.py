@@ -126,6 +126,7 @@ class VisitResponse(BaseModel):
     actual_departure: Optional[str] = None
     status: VisitStatus = VisitStatus.PLANNED
     outcome: Optional[str] = None
+    field_notes: Optional[str] = None
     follow_up_required: bool = False
     created_at: Optional[str] = None
     # Joined fields

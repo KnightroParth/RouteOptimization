@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { doctorsAPI, whatsappAPI } from '../services/api';
 import {
   MessageSquare, Send, CheckCircle2, AlertCircle, Phone,
   ExternalLink, Clock, Copy, ShieldAlert, RefreshCw
@@ -13,6 +14,29 @@ export default function WhatsApp() {
   const [sending, setSending] = useState(false);
   const [sentAlert, setSentAlert] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
+  const [doctors, setDoctors] = useState([]);
+  const [recentLogs, setRecentLogs] = useState([]);
+
+  useEffect(() => {
+    Promise.all([doctorsAPI.list(), whatsappAPI.getLogs()])
+      .then(([doctorsResponse, logsResponse]) => {
+        const loadedDoctors = doctorsResponse.data?.doctors || [];
+        setDoctors(loadedDoctors);
+        if (loadedDoctors[0]) {
+          setTargetDoctor(loadedDoctors[0].name);
+        }
+        setRecentLogs((logsResponse.data?.logs || []).map((log) => ({
+          id: log.id,
+          time: log.sent_at || '—',
+          to: log.to || '—',
+          doctor: '—',
+          type: log.template || 'custom',
+          status: log.status || 'unknown',
+        })));
+      })
+      .catch(() => setError('Unable to load doctors or notification history.'));
+  }, []);
 
   const templates = {
     en_route: {
@@ -47,13 +71,23 @@ export default function WhatsApp() {
     window.open(url, '_blank');
   };
 
-  const handleSendTestSandbox = () => {
+  const handleSendTestSandbox = async () => {
     setSending(true);
-    setTimeout(() => {
+    setError('');
+    try {
+      await whatsappAPI.sendTest({
+        to_number: testNumber,
+        message: messageBody,
+        template_type: selectedTemplate,
+      });
       setSending(false);
       setSentAlert(true);
       setTimeout(() => setSentAlert(false), 4000);
-    }, 800);
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Unable to send test notification.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleCopyText = () => {
@@ -61,12 +95,6 @@ export default function WhatsApp() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  const recentLogs = [
-    { id: 1, to: '+91 98765 43210 (Test)', doctor: 'Dr. Anand Sharma', type: 'En Route ETA', time: '10:05 AM', status: 'Delivered' },
-    { id: 2, to: '+91 98765 43210 (Test)', doctor: 'Dr. Rajesh Mehta', type: 'Visit Confirmation', time: '09:15 AM', status: 'Delivered' },
-    { id: 3, to: '+91 98765 43210 (Test)', doctor: 'Dr. Sneha Kulkarni', type: 'Traffic Notice', time: 'Yesterday', status: 'Delivered' },
-  ];
 
   return (
     <div className="whatsapp-page">
@@ -89,6 +117,8 @@ export default function WhatsApp() {
         </div>
       )}
 
+      {error && <div className="alert-error-banner mb-4">{error}</div>}
+
       <div className="dashboard-grid mb-4">
         {/* Template Selector & Composer */}
         <div className="card">
@@ -109,10 +139,11 @@ export default function WhatsApp() {
                   setMessageBody(templates[selectedTemplate].body.replace(targetDoctor, e.target.value));
                 }}
               >
-                <option value="Dr. Anand Sharma">Dr. Anand Sharma (Cardiology)</option>
-                <option value="Dr. Rajesh Mehta">Dr. Rajesh Mehta (General Physician)</option>
-                <option value="Dr. Priya Deshmukh">Dr. Priya Deshmukh (Pediatrics)</option>
-                <option value="Dr. Sneha Kulkarni">Dr. Sneha Kulkarni (Orthopedics)</option>
+                {doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.name}>
+                    {doctor.name} ({doctor.specialization})
+                  </option>
+                ))}
               </select>
             </div>
 

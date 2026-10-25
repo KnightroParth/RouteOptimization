@@ -1,22 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, ClipboardList, Calendar, Clock, Stethoscope, FileText, CheckCircle2 } from 'lucide-react';
 import { visitsAPI } from '../services/api';
 
-const DEFAULT_DOCTORS = [
-  { name: 'Dr. Anand Sharma', specialty: 'Cardiologist' },
-  { name: 'Dr. Rajesh Mehta', specialty: 'General Physician' },
-  { name: 'Dr. Sneha Kulkarni', specialty: 'Orthopedic' },
-  { name: 'Dr. Vikram Joshi', specialty: 'Oncology' },
-  { name: 'Dr. Priya Deshmukh', specialty: 'Pediatrician' },
-  { name: 'Dr. Vikram Patil', specialty: 'Dermatologist' },
-  { name: 'Dr. Sunita Deshmukh', specialty: 'General Medicine' },
-  { name: 'Dr. Rohan Patel', specialty: 'Diabetology' },
-];
-
-export default function LogVisitModal({ isOpen, onClose, onVisitLogged }) {
+export default function LogVisitModal({ isOpen, onClose, onVisitLogged, doctors = [], mrId }) {
   const [formData, setFormData] = useState({
-    doctor: DEFAULT_DOCTORS[0].name,
-    specialty: DEFAULT_DOCTORS[0].specialty,
+    doctor_id: '',
+    doctor: '',
+    specialty: '',
     date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
     planned: '10:00 AM',
     actual: '10:15 AM',
@@ -26,14 +16,26 @@ export default function LogVisitModal({ isOpen, onClose, onVisitLogged }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (doctors.length > 0 && !formData.doctor_id) {
+      setFormData((previous) => ({
+        ...previous,
+        doctor_id: doctors[0].id,
+        doctor: doctors[0].name,
+        specialty: doctors[0].specialization || '',
+      }));
+    }
+  }, [doctors, formData.doctor_id]);
+
   if (!isOpen) return null;
 
   const handleDoctorChange = (e) => {
-    const selectedDoc = DEFAULT_DOCTORS.find((d) => d.name === e.target.value);
+    const selectedDoc = doctors.find((d) => d.id === e.target.value);
     setFormData((prev) => ({
       ...prev,
-      doctor: e.target.value,
-      specialty: selectedDoc ? selectedDoc.specialty : prev.specialty,
+      doctor_id: e.target.value,
+      doctor: selectedDoc?.name || '',
+      specialty: selectedDoc?.specialization || '',
     }));
   };
 
@@ -44,7 +46,7 @@ export default function LogVisitModal({ isOpen, onClose, onVisitLogged }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.doctor || !formData.notes.trim()) {
+    if (!formData.doctor_id || !mrId || !formData.notes.trim()) {
       setError('Please provide visit detailing notes');
       return;
     }
@@ -63,31 +65,17 @@ export default function LogVisitModal({ isOpen, onClose, onVisitLogged }) {
       };
 
       await visitsAPI.create({
-        doctor_id: '1',
-        mr_id: '1',
+        doctor_id: formData.doctor_id,
+        mr_id: mrId,
         visit_date: new Date().toISOString().split('T')[0],
         planned_time: formData.planned,
-        actual_arrival: formData.actual,
-        outcome: formData.outcome,
-        notes: formData.notes,
       });
 
       if (onVisitLogged) onVisitLogged(newRecord);
       onClose();
     } catch (err) {
-      console.warn('API error logging visit (fallback locally):', err);
-      const newRecord = {
-        id: `v-${Date.now()}`,
-        date: formData.date,
-        doctor: formData.doctor,
-        specialty: formData.specialty,
-        planned: formData.planned,
-        actual: formData.outcome === 'Missed' ? '—' : formData.actual,
-        outcome: formData.outcome,
-        notes: formData.notes,
-      };
-      if (onVisitLogged) onVisitLogged(newRecord);
-      onClose();
+      console.error('API error logging visit:', err);
+      setError(err?.response?.data?.detail || 'Unable to save visit. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -113,9 +101,9 @@ export default function LogVisitModal({ isOpen, onClose, onVisitLogged }) {
             <div className="form-group">
               <label>Doctor / Clinic *</label>
               <select name="doctor" value={formData.doctor} onChange={handleDoctorChange}>
-                {DEFAULT_DOCTORS.map((d) => (
-                  <option key={d.name} value={d.name}>
-                    {d.name} ({d.specialty})
+                {doctors.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.specialization})
                   </option>
                 ))}
               </select>

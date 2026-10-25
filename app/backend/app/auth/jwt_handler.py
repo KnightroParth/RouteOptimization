@@ -10,7 +10,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("JWT_SECRET", "fallback-secret")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+configured_secret = os.getenv("JWT_SECRET")
+if not configured_secret and ENVIRONMENT not in {"development", "test"}:
+    raise RuntimeError("JWT_SECRET must be set outside development and test environments")
+SECRET_KEY = configured_secret or "development-only-secret-change-me"
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 EXPIRATION = int(os.getenv("JWT_EXPIRATION_MINUTES", "480"))
 
@@ -33,15 +37,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def decode_token(token: str) -> dict:
-    if token and token.startswith("demo-"):
-        is_mgr = "manager" in token.lower()
-        return {
-            "sub": "demo-mgr-id" if is_mgr else "demo-mr-id",
-            "email": "manager@demo.com" if is_mgr else "mr@demo.com",
-            "role": "manager" if is_mgr else "mr",
-            "name": "Dr. Suresh Mehta (Manager)" if is_mgr else "Rahul Sharma (MR)",
-            "mr_id": "1",
-        }
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload

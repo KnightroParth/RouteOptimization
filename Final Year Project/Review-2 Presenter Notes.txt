@@ -1,0 +1,335 @@
+# ================================================================
+# REVIEW-II PRESENTATION SCRIPT
+# Read this naturally. Don't memorize - just understand the flow.
+# Total speaking time: ~12-15 minutes (leaves time for questions)
+# ================================================================
+
+
+## SLIDE 1: Title Slide [30 seconds]
+
+"Good morning respected HOD, project coordinator, internal guide, and
+reviewers. We are Group 19 from the AI and Data Science department.
+
+My name is [YOUR NAME]. Our project is titled AI-Based Medical
+Representative Visit Prioritization and Route Optimization System.
+
+This is our Project Review II presentation. I will walk you through
+the complete system design, algorithms, modules, and project plan."
+
+
+## SLIDE 2: Introduction [1 minute]
+
+"So first, some context. A Medical Representative, or MR, is someone
+who works for a pharma company and visits doctors every day to promote
+medicines. India alone has over 5 lakh MRs.
+
+A typical MR visits 8 to 12 doctors in a single day. Each doctor has
+a different location, different availability window, and different
+importance level.
+
+On the left side you can see what a typical MR day looks like.
+On the right side, you can see why this is harder than it sounds.
+
+Every doctor has a different schedule. Some are high-value, some are
+not. Travel between locations eats into productive time. And right now,
+most MRs just plan by habit, not by data.
+
+Our project tackles exactly this: which doctors to visit, when, and
+in what order."
+
+
+## SLIDE 3: Problem Statement [1 minute]
+
+"Currently, MRs plan using spreadsheets, memory, or routes they have
+always followed. This ignores availability, priority, and distance.
+
+The specific problems this causes are listed here:
+- No scoring mechanism, so high and low priority doctors get equal time
+- Routes are habitual, not optimized
+- Availability is tracked informally, so MRs show up when the doctor
+  is not available
+- Managers have no real visibility into what is happening in the field
+
+Our problem statement is: How can we use AI-based priority prediction
+and constraint-based route optimization to automate daily visit
+planning for Medical Representatives?"
+
+
+## SLIDE 4: System Overview [1.5 minutes]
+
+"Here is the complete pipeline. I will walk through it left to right.
+
+We start with historical data: doctor profiles, past visit records,
+and appointment information. This goes through preprocessing and
+feature engineering.
+
+Then the Random Forest model predicts a priority score between 0 and 1
+for each doctor. A score close to 1 means high priority.
+
+Those scores, along with real-world constraints like doctor availability
+windows and MR working hours, go into Google OR-Tools.
+
+OR-Tools solves what is called a Vehicle Routing Problem with Time
+Windows, or VRPTW. It finds the best sequence of visits that respects
+all the constraints while minimizing travel.
+
+The table below shows the three layers. Prediction layer scores the
+visits. Constraint layer applies the rules. Optimization layer
+sequences the route. Each layer is independent and testable on its own."
+
+[If asked: "What is VRPTW?" say: "It is a standard optimization
+problem. Given a set of locations with time windows and travel costs,
+find the minimum-cost route that visits all of them within their
+windows. It is NP-hard, so OR-Tools uses a heuristic called guided
+local search to find good solutions quickly."]
+
+
+## SLIDE 5: Literature Survey [1 minute]
+
+"We reviewed five key papers. The table shows them in the format
+the college requires: paper name, year, key point, and improvements
+suggested.
+
+Zhang et al. from 2014 is the closest to our work. They model the
+MR's day as a stochastic orienteering problem. But they have no ML
+and no web application.
+
+Bouatouche used a firefly algorithm for sales-rep routing, but again,
+no priority scoring, no dashboard.
+
+The pattern across all five papers is the same: each one solves one
+piece of the problem. Nobody puts ML prediction, route optimization,
+and a web dashboard together."
+
+
+## SLIDE 6: Literature Survey continued [1 minute]
+
+"This slide shows the research gap more clearly with a comparison
+table.
+
+Manual planning has no scoring and no optimization. Commercial CRM
+tools like Veeva track visits, but they do not predict priority and
+they do not optimize routes.
+
+Our system is the only one in this comparison that combines all three:
+ML-based priority scoring, VRPTW optimization, and real-time
+dashboards.
+
+Our contribution is not inventing new algorithms. It is integrating
+existing techniques into one domain-specific platform."
+
+[If asked about Veeva: "Veeva is a CRM tool. It records which doctors
+were visited and generates reports. But it does not tell the MR which
+doctor to visit next or find the optimal route. We add that
+intelligence layer."]
+
+
+## SLIDE 7: Architecture [1 minute]
+
+"The architecture is layered.
+
+At the top, three user types: MR, Doctor, and Manager. They interact
+through a React.js frontend with role-based views.
+
+The frontend talks to a FastAPI backend through REST APIs. The backend
+handles authentication, business logic, and orchestrates the ML model
+and the optimizer.
+
+At the bottom, three services: MySQL for data storage, Random Forest
+for priority prediction, and Google OR-Tools for route optimization.
+
+The key architectural decision is that the ML model and the optimizer
+are separate modules. The model scores visits, the optimizer sequences
+them. We can test, tune, or replace either one independently."
+
+[If asked "Why FastAPI?": "Async support, so the API does not block
+while the optimizer runs. Auto-generated documentation. Built-in
+type validation with Pydantic."]
+
+
+## SLIDE 8: Software Requirement Specification [45 seconds]
+
+"On the left, our 10 functional requirements covering the full
+workflow: user registration, doctor management, appointment creation,
+ML prediction, route generation, dashboards, visit logging, and
+reporting.
+
+On the right, 8 non-functional requirements. The key ones are:
+API response under 3 seconds, support for 50 doctors per territory,
+and role-based access control on all endpoints.
+
+Hardware requirements are standard: i5 processor, 8 GB RAM, SSD."
+
+
+## SLIDE 9: Design / Algorithms / Techniques [1.5 minutes]
+
+"Two core algorithms.
+
+First, Random Forest. It is an ensemble of decision trees, typically
+100 to 500 trees. Each tree is trained on a bootstrap sample of the
+data. The final prediction is by majority vote. The reason we chose
+Random Forest is that it gives us feature importance rankings. When
+someone asks 'why is Doctor A ranked higher?', we can point to
+specific features like days since last visit or prescription volume.
+
+Second, VRPTW solved by Google OR-Tools. Given locations, travel
+times, service durations, and time windows, OR-Tools finds the
+minimum-cost route. It uses a heuristic called guided local search.
+
+The table at the bottom shows our feature engineering pipeline. Six
+features: days since last visit, visit frequency, doctor specialty,
+prescription volume, geographic distance, and availability window."
+
+[If asked "Why not neural networks?": "Random Forest works well on
+tabular data of this size and gives interpretable results. Neural
+networks lose interpretability and are overkill for our dataset scale."]
+
+[If asked "Why not XGBoost?": "We plan to benchmark against XGBoost.
+Random Forest is our primary model because of interpretability."]
+
+
+## SLIDE 10: Modules Split-Up [45 seconds]
+
+"The system has 8 modules. The table lists each one with its
+responsibility and technology.
+
+M1 through M3 handle data: storage, authentication, preprocessing.
+M4, M5, M6 are the core intelligence pipeline: ML prediction,
+constraint application, and route optimization.
+M7 is the frontend. M8 is reporting.
+
+Each module has clear inputs and outputs. They can be developed and
+tested in parallel across the team."
+
+[If asked about team split: "One person handles ML and preprocessing.
+One handles constraints and optimization. One handles frontend and
+authentication. Integration is a team effort."]
+
+
+## SLIDE 11: Proposed System [1 minute]
+
+"This is the step-by-step workflow from the MR's perspective.
+
+Step 1: MR logs in. System pulls territory data.
+Step 2 and 3: Data gets cleaned and features are extracted.
+Step 4: Random Forest scores each doctor with a priority.
+Step 5: Constraints are applied: this doctor only available 10 to 12,
+that visit needs 30 minutes, MR works 9 to 6.
+Step 6: OR-Tools produces the optimized sequence.
+Step 7: MR sees the plan on the dashboard with visit order and
+estimated arrival times.
+
+The four differentiators at the bottom are important: data-driven
+priority instead of gut feel, time-window aware routing, integrated
+pipeline, and manager visibility."
+
+
+## SLIDE 12: Software Tools and Technologies [30 seconds]
+
+"This table lists every technology and why we picked it. Everything
+is open-source, no licensing costs. Python for ML ecosystem. React
+for dashboard rendering. FastAPI for async API support. OR-Tools
+because it is a production-grade VRPTW solver."
+
+
+## SLIDE 13: Proposed Outcome [1 minute]
+
+"Three evaluation tracks.
+
+ML: accuracy, precision, recall, F1, confusion matrix.
+Route: total distance, travel time, visits completed, time-window
+violations, and percentage improvement over a nearest-neighbour
+baseline.
+System: API response time, dashboard load time, role access.
+
+I want to be clear: these are evaluation criteria and targets. We
+have not built the system yet. We will only report actual measured
+values after implementation. We are not claiming any improvement
+percentage at this stage."
+
+
+## SLIDE 14: Feasibility and Scope [45 seconds]
+
+"Feasibility across four dimensions.
+Technical: all libraries exist and are well-documented.
+Operational: MRs just need a browser.
+Economic: everything is free and open-source.
+Schedule: 17-week plan with milestones.
+
+Current scope is single-MR, single-territory, one route per day.
+Future scope includes multi-MR optimization, real-time re-routing,
+and a mobile app."
+
+
+## SLIDE 15: Project Plan 2.0 [30 seconds]
+
+"Five phases, 17 weeks. Research and data first, then ML, then
+optimization engine, then web app, then integration and testing.
+
+Main change from Plan 1.0: we overlap phases 3 and 4 so optimization
+and web development happen in parallel. Integration gets a dedicated
+3-week window."
+
+
+## SLIDE 16: References [15 seconds]
+
+"Ten references: 6 research papers, 1 ML library paper, and 3
+official documentation sources. Full DOIs available in the final
+report."
+
+
+## SLIDE 17: Thank You [15 seconds]
+
+"To summarize: manual MR planning wastes time and misses high-priority
+doctors. Our system uses Random Forest for priority prediction and
+Google OR-Tools for route optimization, all in one web platform.
+
+Thank you. We welcome any questions or suggestions."
+
+
+# ================================================================
+# QUICK REFERENCE: COMMON EXAMINER QUESTIONS
+# ================================================================
+
+Q: "What is the difference between your system and Google Maps?"
+A: "Google Maps finds a route between two points. It cannot decide
+which doctors to visit first, it cannot factor in priority scores,
+and it cannot handle time-window constraints. Our system handles
+selection and sequencing together."
+
+Q: "Is VRPTW NP-hard?"
+A: "Yes. That is why we use OR-Tools, which uses guided local search,
+a metaheuristic that finds good solutions in reasonable time. For
+10-15 doctors per day, it solves in seconds."
+
+Q: "What if the ML model predicts wrong?"
+A: "The priority score is a weight, not a hard constraint. Even if
+it is slightly off, the optimizer still produces a valid route. Worst
+case is a suboptimal order, not a system failure."
+
+Q: "What dataset are you using?"
+A: "We plan to use a combination of publicly available pharmaceutical
+sales data and simulated visit records. For the ML model, we need
+historical visit data with at least 6 months of records. If public
+data is insufficient, we will generate synthetic data that matches
+real-world distributions."
+
+Q: "What accuracy do you expect?"
+A: "Based on similar classification tasks, we target 80-90% accuracy.
+But accuracy alone is not enough for imbalanced data. We will track
+precision and recall for the high-priority class specifically."
+
+Q: "Why not use a genetic algorithm instead of OR-Tools?"
+A: "OR-Tools has built-in VRPTW support with constraint handling.
+Implementing our own GA would add complexity without clear benefit
+at our scale."
+
+Q: "What happens if a doctor cancels mid-day?"
+A: "In current scope, re-optimization is triggered manually. The
+system re-runs OR-Tools with updated constraints. Real-time
+automatic re-routing is future scope."
+
+Q: "How are you splitting work among 3 people?"
+A: "One handles ML model and preprocessing. One handles constraint
+engine and route optimization. One handles frontend and authentication.
+Database design and integration testing are shared."

@@ -1,5 +1,5 @@
 """Dashboard data endpoints for MR and Manager views."""
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from app.auth.jwt_handler import get_current_user, require_role
 from app.db import get_supabase
 
@@ -13,6 +13,9 @@ async def mr_dashboard(
     user: dict = Depends(get_current_user),
 ):
     """Get MR dashboard stats: total, completed, pending, high-priority visits."""
+    if user.get("role") == "mr" and user.get("mr_id") != mr_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this representative")
+
     sb = get_supabase()
 
     query = sb.table("visits").select("id, status, follow_up_required").eq("mr_id", mr_id)

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { mlAPI } from '../services/api';
 import {
   Target, RefreshCw, CheckCircle2, TrendingUp,
   Sliders, Activity, Users, Clock, Shield
@@ -6,51 +8,55 @@ import {
 
 export default function MLPredictions() {
   const [running, setRunning] = useState(false);
-  const [logs, setLogs] = useState([
-    '[08:00:01] Initializing doctor visit prioritization pipeline...',
-    '[08:00:02] Loading 145 doctor clinic profiles from database.',
-    '[08:00:03] Extracting 6 core features: Recency, Rx Volume, Conversion, Time Window, Beat Proximity, Specialty.',
-    '[08:00:04] Executing multi-factor scoring model across clinical feature matrix...',
-    '[08:00:04] Calibrating decision thresholds: High > 0.70, Medium 0.40-0.70, Low < 0.40.',
-    '[08:00:05] Scoring result: 12 HIGH PRIORITY, 45 MEDIUM PRIORITY, 88 LOW PRIORITY.',
-    '[08:00:06] Synchronized priority weights with route planning engine.',
-    '[08:00:06] Batch scoring cycle completed successfully in 184ms (latency: 1.2ms/record).'
-  ]);
+  const [logs, setLogs] = useState([]);
+  const [featureWeights, setFeatureWeights] = useState([]);
+  const [results, setResults] = useState([]);
+  const [metrics, setMetrics] = useState({
+    accuracy: null, precision: null, recall: null, f1_score: null,
+    cv_accuracy: null, nEstimators: null, model_version: null,
+    n_training_samples: null, max_depth: null,
+  });
+  const [error, setError] = useState('');
 
-  const featureWeights = [
-    { name: 'Days Since Last Visit (Recency)', weight: 0.35, pct: '35%', desc: 'Doctors overdue for detailing receive highest urgency boost' },
-    { name: 'Prescription Volume (Rx Potential)', weight: 0.25, pct: '25%', desc: 'Tier-1 hospital prescribers weighted for maximum business conversion' },
-    { name: 'Historical Conversion Rate', weight: 0.15, pct: '15%', desc: 'Responsiveness ratio of doctor to past medical representative detailing' },
-    { name: 'Doctor Availability Window Match', weight: 0.15, pct: '15%', desc: 'Feasibility of clinic consultation hours vs representative beat route' },
-    { name: 'Specialty Category Alignment', weight: 0.10, pct: '10%', desc: 'Strategic match with active pharmaceutical campaign drugs' },
-  ];
+  useEffect(() => {
+    Promise.all([mlAPI.getFeatureImportance(), mlAPI.getResults()])
+      .then(([importanceResponse, resultsResponse]) => {
+        const data = importanceResponse.data;
+        setFeatureWeights((data.feature_weights || []).map((feature) => ({
+          ...feature,
+          pct: `${feature.percentage}%`,
+          desc: feature.description,
+        })));
+        setMetrics({
+          accuracy: data.accuracy,
+          precision: data.precision,
+          recall: data.recall,
+          f1_score: data.f1_score,
+          cv_accuracy: data.cv_accuracy,
+          nEstimators: data.n_estimators,
+          model_version: data.model_version,
+          n_training_samples: data.n_training_samples,
+          max_depth: data.max_depth,
+        });
+        setResults(resultsResponse.data?.results || []);
+      })
+      .catch(() => setError('Unable to load model information from the server.'));
+  }, []);
 
-  const sampleScoredDoctors = [
-    { name: 'Dr. Anand Sharma', specialty: 'Cardiology', days: 45, volume: 'High', score: 0.89, priority: 'High', confidence: '94%' },
-    { name: 'Dr. Rajesh Mehta', specialty: 'General Physician', days: 28, volume: 'High', score: 0.85, priority: 'High', confidence: '91%' },
-    { name: 'Dr. Priya Deshmukh', specialty: 'Pediatrics', days: 35, volume: 'Medium', score: 0.74, priority: 'High', confidence: '87%' },
-    { name: 'Dr. Sneha Kulkarni', specialty: 'Orthopedics', days: 18, volume: 'Medium', score: 0.62, priority: 'Medium', confidence: '78%' },
-    { name: 'Dr. Sunita Deshmukh', specialty: 'General Medicine', days: 14, volume: 'Medium', score: 0.58, priority: 'Medium', confidence: '74%' },
-    { name: 'Dr. Vikram Joshi', specialty: 'Oncology', days: 12, volume: 'Low', score: 0.42, priority: 'Medium', confidence: '69%' },
-    { name: 'Dr. Vikram Patil', specialty: 'Dermatology', days: 5, volume: 'Low', score: 0.34, priority: 'Low', confidence: '82%' },
-  ];
-
-  const handleReRunInference = () => {
+  const handleReRunInference = async () => {
     setRunning(true);
-    const now = new Date();
-    const timeStr = now.toTimeString().split(' ')[0];
-    
-    setTimeout(() => {
-      setLogs((prev) => [
-        `[${timeStr}] Triggering on-demand batch scoring recalculation...`,
-        `[${timeStr}] Fetching live feature vectors for 145 doctor clinics...`,
-        `[${timeStr}] Scoring clinical priority matrices across active territories...`,
-        `[${timeStr}] Scored: 12 High, 45 Medium, 88 Low urgency levels.`,
-        `[${timeStr}] Priority vector synchronized with route engine in 162ms.`,
-        ...prev.slice(0, 8),
-      ]);
+    setError('');
+    try {
+      const { data } = await mlAPI.runBatch();
+      setLogs(data.logs || []);
+      const resultsResponse = await mlAPI.getResults();
+      setResults(resultsResponse.data?.results || []);
+      toast.success(`Batch inference complete — ${data.counts?.total || 0} doctors scored`);
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Batch inference failed.');
+    } finally {
       setRunning(false);
-    }, 900);
+    }
   };
 
   return (
@@ -61,7 +67,7 @@ export default function MLPredictions() {
           <p>Multi-factor clinical scoring model evaluating doctor visit urgency, availability, and target potential</p>
         </div>
         <div className="page-header-actions">
-          <span className="badge-tag">
+            <span className="badge-tag">
             <Sliders size={14} /> Priority Scoring Engine
           </span>
           <button 
@@ -76,42 +82,81 @@ export default function MLPredictions() {
         </div>
       </div>
 
+      {error && <div className="alert-error-banner mb-4">{error}</div>}
+
       {/* Model Performance Overview Cards */}
       <div className="stats-grid mb-4">
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-label">Scoring Accuracy</span>
+            <span className="stat-card-label">Test Accuracy</span>
             <div className="stat-card-icon"><TrendingUp size={16} /></div>
           </div>
-          <div className="stat-card-value">91.4%</div>
-          <div className="stat-card-subtitle">Validated on historical visit conversions</div>
+          <div className="stat-card-value">{metrics.accuracy == null ? '—' : `${(metrics.accuracy * 100).toFixed(1)}%`}</div>
+          <div className="stat-card-subtitle">Held-out test set evaluation</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-label">High Priority Threshold</span>
+            <span className="stat-card-label">Weighted Precision</span>
+            <div className="stat-card-icon"><Target size={16} /></div>
+          </div>
+          <div className="stat-card-value">{metrics.precision == null ? '—' : `${(metrics.precision * 100).toFixed(1)}%`}</div>
+          <div className="stat-card-subtitle">Correct positive predictions</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-label">Weighted Recall</span>
             <div className="stat-card-icon"><Activity size={16} /></div>
           </div>
-          <div className="stat-card-value">&gt; 0.70</div>
-          <div className="stat-card-subtitle">Normalized priority cutoff score</div>
+          <div className="stat-card-value">{metrics.recall == null ? '—' : `${(metrics.recall * 100).toFixed(1)}%`}</div>
+          <div className="stat-card-subtitle">True positive capture rate</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-label">Active Doctor Base</span>
-            <div className="stat-card-icon"><Users size={16} /></div>
+            <span className="stat-card-label">F1 Score</span>
+            <div className="stat-card-icon"><Shield size={16} /></div>
           </div>
-          <div className="stat-card-value">145</div>
-          <div className="stat-card-subtitle">Clinics scored daily</div>
+          <div className="stat-card-value">{metrics.f1_score == null ? '—' : `${(metrics.f1_score * 100).toFixed(1)}%`}</div>
+          <div className="stat-card-subtitle">Harmonic mean of precision & recall</div>
         </div>
+      </div>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-label">Processing Latency</span>
-            <div className="stat-card-icon"><Clock size={16} /></div>
+      {/* Model Configuration Card */}
+      <div className="card mb-4">
+        <div className="card-header">
+          <div className="card-title-group">
+            <Shield size={18} />
+            <h3>Model Configuration</h3>
           </div>
-          <div className="stat-card-value">184 ms</div>
-          <div className="stat-card-subtitle">Sub-second real-time batch calculation</div>
+          <span className="badge-subtle">{metrics.model_version || 'Loading...'}</span>
+        </div>
+        <div className="card-body">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+            {[
+              { label: 'Algorithm', value: 'Random Forest' },
+              { label: 'Estimators', value: metrics.nEstimators || '—' },
+              { label: 'Max Depth', value: metrics.max_depth || '—' },
+              { label: 'Cross-Validation', value: metrics.cv_accuracy != null ? `${(metrics.cv_accuracy * 100).toFixed(1)}%` : '—' },
+              { label: 'Training Samples', value: metrics.n_training_samples ? metrics.n_training_samples.toLocaleString() : '—' },
+              { label: 'Class Balancing', value: 'Balanced Weights' },
+            ].map((item) => (
+              <div key={item.label} style={{
+                padding: '12px 16px',
+                background: 'rgba(99, 102, 241, 0.06)',
+                borderRadius: '8px',
+                border: '1px solid rgba(99, 102, 241, 0.1)',
+              }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                  {item.label}
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 600, color: '#e2e8f0' }}>
+                  {item.value}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -216,29 +261,17 @@ export default function MLPredictions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sampleScoredDoctors.map((doc) => (
-                    <tr key={doc.name}>
-                      <td className="fw-semibold">{doc.name}</td>
-                      <td>{doc.specialty}</td>
-                      <td>{doc.days} days</td>
-                      <td>
-                        <span className={`tag-pill volume-${doc.volume.toLowerCase()}`}>
-                          {doc.volume}
-                        </span>
-                      </td>
-                      <td>
-                        <strong className={`score-${doc.priority.toLowerCase()}`}>
-                          {doc.score.toFixed(2)}
-                        </strong>
-                      </td>
-                      <td>
-                        <span className={`priority-badge ${doc.priority.toLowerCase()}`}>
-                          {doc.priority}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="confidence-text">{doc.confidence}</span>
-                      </td>
+                  {results.length === 0 ? (
+                    <tr><td colSpan="7" className="text-muted">Run batch inference to load current priority results.</td></tr>
+                  ) : results.map((doctor) => (
+                    <tr key={doctor.id}>
+                      <td className="fw-semibold">{doctor.name}</td>
+                      <td>{doctor.specialty}</td>
+                      <td>—</td>
+                      <td>—</td>
+                      <td><strong>{Number(doctor.score).toFixed(2)}</strong></td>
+                      <td><span className={`priority-badge ${doctor.priority}`}>{doctor.priority}</span></td>
+                      <td>—</td>
                     </tr>
                   ))}
                 </tbody>

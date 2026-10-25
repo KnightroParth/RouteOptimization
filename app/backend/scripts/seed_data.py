@@ -15,6 +15,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 from app.db import get_supabase
 from app.auth.jwt_handler import hash_password
+from app.services.seed_helpers import filter_new_visits
 from datetime import date, timedelta
 
 sb = get_supabase()
@@ -316,14 +317,21 @@ for i, did in enumerate(doctor_ids[9:12]):
         "follow_up_required": i == 1,
     })
 
-for v in visit_data:
+existing_visits = (
+    sb.table("visits")
+    .select("doctor_id, mr_id, visit_date")
+    .execute()
+)
+new_visit_data = filter_new_visits(existing_visits.data or [], visit_data)
+
+for v in new_visit_data:
     try:
         sb.table("visits").insert(v).execute()
     except Exception as e:
-        print(f"  Visit insert error (may be duplicate): {e}")
+        print(f"  Visit insert error: {e}")
         continue
 
-print(f"  Created {len(visit_data)} visits")
+print(f"  Created {len(new_visit_data)} visits; skipped {len(visit_data) - len(new_visit_data)} existing")
 
 print("\n[OK] Seed data complete!")
 print("Demo credentials:")

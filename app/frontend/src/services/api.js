@@ -1,13 +1,5 @@
 import axios from 'axios';
-import {
-  mockUsers,
-  mockDoctors,
-  mockMRDashboard,
-  mockVisits,
-  mockGeneratedRoute,
-  mockManagerDashboard,
-  mockStaff,
-} from './mockData';
+import toast from 'react-hot-toast';
 
 const API_BASE = import.meta.env.PROD 
   ? '/api' 
@@ -28,7 +20,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 responses and HTML responses (Vercel SPA fallback)
+// Handle error responses with toast notifications
 api.interceptors.response.use(
   (res) => {
     if (typeof res.data === 'string' && res.data.includes('<html')) {
@@ -37,117 +29,63 @@ api.interceptors.response.use(
     return res;
   },
   (err) => {
-    const token = localStorage.getItem('token');
-    if (err.response?.status === 401 && !token?.startsWith('demo-')) {
+    const status = err.response?.status;
+    const detail = err.response?.data?.detail;
+
+    if (status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/#/login';
+    } else if (status === 403) {
+      toast.error(detail || 'Access denied — insufficient permissions');
+    } else if (status === 422) {
+      toast.error(detail || 'Validation error — please check your input');
+    } else if (status >= 500) {
+      toast.error('Server error — please try again later');
+    } else if (!err.response) {
+      toast.error('Network error — unable to reach the server');
     }
+
     return Promise.reject(err);
   }
 );
 
-// Helper for demo fallback
-const withFallback = async (apiCall, fallbackData) => {
-  try {
-    return await apiCall();
-  } catch (err) {
-    console.warn('Backend unavailable, using demo mode fallback:', err?.message || err);
-    return { data: fallbackData, isDemoFallback: true };
-  }
-};
-
 // ── Auth ────────────────────────────────────────────────
 export const authAPI = {
-  login: async (email, password) => {
-    try {
-      return await api.post('/auth/login', { email, password });
-    } catch {
-      // Demo fallback login
-      const isMgr = (email || '').toLowerCase().includes('manager');
-      return {
-        data: isMgr ? mockUsers.manager : mockUsers.mr,
-        isDemoFallback: true,
-      };
-    }
-  },
+  login: (email, password) => api.post('/auth/login', { email, password }),
   register: (data) => api.post('/auth/register', data),
 };
 
 // ── Doctors ─────────────────────────────────────────────
 export const doctorsAPI = {
-  list: (params) => withFallback(() => api.get('/doctors', { params }), { doctors: mockDoctors }),
-  get: (id) => withFallback(() => api.get(`/doctors/${id}`), mockDoctors.find((d) => d.id === Number(id)) || mockDoctors[0]),
-  create: (data) => withFallback(
-    () => api.post('/doctors', data),
-    { ...data, id: `doc-${Date.now()}` }
-  ),
-  update: (id, data) => withFallback(
-    () => api.put(`/doctors/${id}`, data),
-    { ...data, id }
-  ),
-  delete: (id) => withFallback(
-    () => api.delete(`/doctors/${id}`),
-    { message: 'Doctor deleted', id }
-  ),
+  list: (params) => api.get('/doctors', { params }),
+  get: (id) => api.get(`/doctors/${id}`),
+  create: (data) => api.post('/doctors', data),
+  update: (id, data) => api.put(`/doctors/${id}`, data),
+  delete: (id) => api.delete(`/doctors/${id}`),
 };
 
 // ── Visits ──────────────────────────────────────────────
 export const visitsAPI = {
-  list: (params) => withFallback(() => api.get('/visits', { params }), mockVisits),
-  daily: async (mr_id, date) => {
-    try {
-      const res = await api.get('/visits/daily', { params: { mr_id, date } });
-      if (!res.data?.visits || res.data.visits.length === 0) {
-        return { data: { visits: mockVisits }, isDemoFallback: true };
-      }
-      return res;
-    } catch {
-      return { data: { visits: mockVisits }, isDemoFallback: true };
-    }
-  },
-  create: (data) => withFallback(
-    () => api.post('/visits', data),
-    { ...data, id: `visit-${Date.now()}`, status: 'planned' }
-  ),
-  update: (id, data) => withFallback(
-    () => api.put(`/visits/${id}`, data),
-    { ...data, id }
-  ),
-  updateStatus: async (id, data) => {
-    try {
-      return await api.patch(`/visits/${id}/status`, data);
-    } catch {
-      return { data: { id, ...data }, isDemoFallback: true };
-    }
-  },
-  delete: (id) => withFallback(
-    () => api.delete(`/visits/${id}`),
-    { message: 'Visit deleted', id }
-  ),
+  list: (params) => api.get('/visits', { params }),
+  daily: (mr_id, date) => api.get('/visits/daily', { params: { mr_id, date } }),
+  create: (data) => api.post('/visits', data),
+  update: (id, data) => api.put(`/visits/${id}`, data),
+  updateStatus: (id, data) => api.patch(`/visits/${id}/status`, data),
+  delete: (id) => api.delete(`/visits/${id}`),
 };
 
 // ── Routes ──────────────────────────────────────────────
 export const routesAPI = {
-  generate: async (data) => {
-    try {
-      const res = await api.post('/routes/generate', data);
-      if (!res.data || res.data.solver_status === 'error' || !res.data.stops?.length) {
-        return { data: mockGeneratedRoute, isDemoFallback: true };
-      }
-      return res;
-    } catch {
-      return { data: mockGeneratedRoute, isDemoFallback: true };
-    }
-  },
-  get: (id) => withFallback(() => api.get(`/routes/${id}`), mockGeneratedRoute),
-  list: (params) => withFallback(() => api.get('/routes', { params }), [mockGeneratedRoute]),
+  generate: (data) => api.post('/routes/generate', data),
+  get: (id) => api.get(`/routes/${id}`),
+  list: (params) => api.get('/routes', { params }),
 };
 
 // ── Dashboard ───────────────────────────────────────────
 export const dashboardAPI = {
-  mr: (mr_id, date) => withFallback(() => api.get('/dashboard/mr', { params: { mr_id, date } }), mockMRDashboard),
-  manager: () => withFallback(() => api.get('/dashboard/manager'), mockManagerDashboard),
+  mr: (mr_id, date) => api.get('/dashboard/mr', { params: { mr_id, date } }),
+  manager: () => api.get('/dashboard/manager'),
 };
 
 // ── WhatsApp ────────────────────────────────────────────
@@ -162,6 +100,7 @@ export const whatsappAPI = {
 export const mlAPI = {
   getFeatureImportance: () => api.get('/ml/feature-importance'),
   runBatch: () => api.post('/ml/run-batch'),
+  getResults: (params) => api.get('/ml/results', { params }),
 };
 
 // ── Settings ────────────────────────────────────────────
@@ -172,19 +111,14 @@ export const settingsAPI = {
 
 // ── Staff Management (Manager only) ─────────────────────
 export const staffAPI = {
-  list: () => withFallback(() => api.get('/staff'), { staff: mockStaff, total: mockStaff.length }),
-  create: (data) => withFallback(
-    () => api.post('/staff', data),
-    { message: 'Staff member created (demo)', user_id: `demo-${Date.now()}`, name: data.name, email: data.email, territory: data.territory }
-  ),
-  update: (userId, data) => withFallback(
-    () => api.patch(`/staff/${userId}`, data),
-    { message: 'Staff member updated (demo)', user_id: userId }
-  ),
-  remove: (userId) => withFallback(
-    () => api.delete(`/staff/${userId}`),
-    { message: 'Staff member removed (demo)', user_id: userId }
-  ),
+  list: () => api.get('/staff'),
+  create: (data) => api.post('/staff', data),
+  update: (userId, data) => api.patch(`/staff/${userId}`, data),
+  remove: (userId) => api.delete(`/staff/${userId}`),
+};
+// ── Analytics ───────────────────────────────────────────
+export const analyticsAPI = {
+  overview: () => api.get('/analytics/overview'),
 };
 
 export default api;

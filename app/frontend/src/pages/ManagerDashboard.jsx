@@ -11,6 +11,7 @@ export default function ManagerDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -21,8 +22,10 @@ export default function ManagerDashboard() {
       setLoading(true);
       const res = await dashboardAPI.manager();
       setStats(res.data);
+      setError('');
     } catch (err) {
       console.error('Failed to load manager dashboard:', err);
+      setError('Unable to load manager dashboard from the server.');
     } finally {
       setLoading(false);
     }
@@ -61,6 +64,8 @@ export default function ManagerDashboard() {
           </Link>
         </div>
       </div>
+
+      {error && <div className="alert-error-banner mb-4">{error}</div>}
 
       <div className="stats-grid">
         {statCards.map((s) => (

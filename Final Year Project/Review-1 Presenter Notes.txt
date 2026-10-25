@@ -1,0 +1,144 @@
+# Review-1 Presenter Notes
+# AI-Based Medical Representative Visit Prioritization & Route Optimization System
+# Group 19 | Bhakti Gundecha, Parth Lokhande, Udaykiran Bitla
+# Guide: Prof. Mrs. M. U. Buchade
+# ----------------------------------------------------------------
+
+
+## SLIDE 1: Title Slide
+
+- "Good morning respected HOD, project coordinator, guide, and reviewers. We are Group 19 from the AI and Data Science department. I am Bhakti Jayantilal Gundecha, and along with my team members Parth Lokhande and Udaykiran Bitla, we are presenting our proposed final-year project."
+- "Our project is titled AI-Based Medical Representative Visit Prioritization and Route Optimization System."
+- "In short, we are building a system that helps Medical Representatives figure out which doctors to visit, when to visit them, and in what order."
+
+
+## SLIDE 2: Problem Statement
+
+Speaking Points:
+- "Before explaining our solution, let me walk you through the problem. A Medical Representative, or MR, visits multiple doctors daily in a territory. Every doctor has different priority, different availability, and is at a different location. Right now, most MRs just rely on memory or fixed routes."
+- "This leads to the problems listed here: wasted travel, missed high-priority doctors, and managers having no idea what is happening in the field."
+- "So our central question is: can we use AI and optimization to automate this entire planning process?"
+
+Anticipated Examiner Question:
+Q: "How is this different from a standard Travelling Salesman Problem or just using Google Maps?"
+A: "Good question. The TSP just minimizes distance. Our problem adds priority ranking through ML, time-window constraints for each doctor, and working-hour limits for the MR. Google Maps can find a route between two points, but it cannot decide which doctors to visit first or factor in availability windows. Our system handles the selection and sequencing together."
+
+
+## SLIDE 3: Motivation
+
+Speaking Points:
+- "Let me make this concrete with a scenario. Imagine one MR, ten doctors, one day. Doctor A is high-priority. Doctor D is only free after 4 PM. Doctor E is 12 km away. Doctor F is barely 1 km from Doctor A."
+- "If I plan manually, maybe I handle distance. Maybe I handle priority. But doing both, plus availability, plus travel time, plus visit duration? That is five constraints simultaneously. No human does that efficiently on paper."
+- "This is not just an academic exercise. Published research from EJOR and IEEE confirms pharma sales-force routing is a genuine optimization problem."
+
+Anticipated Examiner Question:
+Q: "Is there industry evidence that this is a real problem, or is this hypothetical?"
+A: "Yes. Studies by Zhang et al. (2014) and Yi et al. (2003) specifically model pharmaceutical rep scheduling. Companies like Veeva and IQVIA have commercial CRM products, but they focus on tracking, not on AI-driven optimization. The gap between tracking and actually optimizing is what we address."
+
+
+## SLIDE 4: Aim and Objectives
+
+Speaking Points:
+- "Our aim is straightforward: build a web application that predicts visit priority and generates an optimized daily route."
+- "We have five objectives, each mapped to a concrete deliverable. Manage the data, build the ML model, run the optimizer, display it on dashboards, and measure whether it actually works."
+- "One clarification I want to make upfront: our AI does not diagnose patients or predict treatments. It only decides which doctor visits matter most and in what order."
+
+Anticipated Examiner Question:
+Q: "Why Random Forest and not a neural network or gradient boosting?"
+A: "Random Forest gives us interpretable feature importances, which is important when an MR or manager asks 'why is Doctor A ranked higher?' It handles mixed feature types well and is robust to overfitting on small datasets. We will benchmark against other models, but RF is our primary choice."
+
+
+## SLIDE 5: Literature Review
+
+Speaking Points:
+- "We reviewed five major research threads. The table shows the key papers. Zhang et al. modeled the MR's day as a stochastic orienteering problem. Bouatouche used a hybrid firefly algorithm for sales rep routing. Liu et al. surveyed 64 VRPTW studies."
+- "The common pattern: each paper solves one piece. Optimization researchers handle routing. ML researchers handle prediction. CRM tools handle data management. Nobody puts all three into one platform."
+- "That gap is our contribution. Not inventing a new algorithm, but integrating prediction plus constraints plus optimization into one domain-specific web tool."
+
+Anticipated Examiner Question:
+Q: "If Veeva CRM already exists, how is your system different?"
+A: "Veeva is a data management tool. It tracks visits, stores doctor profiles, and generates reports. But it does not predict which doctor to visit next or optimize the route sequence. Our system adds the intelligence layer on top."
+
+
+## SLIDE 6: Abstract / System Overview
+
+Speaking Points:
+- "This slide shows the complete pipeline from data input to output. Historical data goes through preprocessing and feature engineering. The Random Forest model produces a priority score between 0 and 1 for each doctor."
+- "Those scores, combined with appointment constraints, feed into Google OR-Tools. The optimizer solves a Vehicle Routing Problem with Time Windows and produces the sequence."
+- "The three layers are independent. The prediction layer can be evaluated using ML metrics. The optimization layer can be evaluated using route metrics. This makes debugging and improvement much easier."
+
+Anticipated Examiner Question:
+Q: "What happens if the ML model predicts wrong? Does it break the optimizer?"
+A: "No. The optimizer treats the priority score as a weight, not a hard constraint. Even if a priority is slightly off, the optimizer still produces a feasible route. The worst case is a suboptimal sequence, not a system failure."
+
+
+## SLIDE 7: Requirements, Test Environment and Tools
+
+Speaking Points:
+- "For development, we need standard hardware. 8 GB RAM is minimum, 16 GB preferred for running the ML model and optimizer simultaneously."
+- "The software stack: Python for everything backend and ML. React.js for the frontend. FastAPI as the API layer. MySQL for persistence. Scikit-learn for the model. OR-Tools for routing."
+- "We picked FastAPI over Flask because of its async support and auto-generated API documentation, which speeds up frontend integration."
+
+Anticipated Examiner Question:
+Q: "Why MySQL instead of PostgreSQL or MongoDB?"
+A: "Our data is structured and relational: doctors, MRs, appointments, visits. MySQL handles this naturally. We do not need document-level flexibility or complex JSON queries. A relational database with proper foreign keys enforces data integrity at the schema level."
+
+
+## SLIDE 8: Proposed System
+
+Speaking Points:
+- "This is the step-by-step workflow. It starts with data collection: doctor profiles, visit history, appointment records, all stored in MySQL."
+- "After preprocessing and feature engineering, the RF model assigns each doctor a priority score. Then we apply real constraints: Doctor X only available 10 to 12, MR works 9 to 6, each visit takes 20 minutes."
+- "OR-Tools takes all of this and generates the optimal sequence. The MR opens the dashboard in the morning and sees a ready-made plan."
+
+Anticipated Examiner Question:
+Q: "How do you handle last-minute changes, like a doctor cancelling?"
+A: "In the current scope, re-optimization would need to be triggered manually. The system can re-run the optimizer with updated constraints. Real-time re-routing is a future enhancement, not part of the initial scope."
+
+
+## SLIDE 9: Proposed Outcome
+
+Speaking Points:
+- "We have three separate evaluation tracks. ML evaluation uses standard metrics: accuracy, precision, recall, F1. Route evaluation compares the optimized route against a manual baseline. System evaluation tests API performance and role-based access."
+- "I want to be very clear: the numbers you see here are targets, not results. We have not built or tested anything yet. We will only report measured values after implementation."
+- "This honesty is intentional. We want our final evaluation to be based on actual experimental evidence."
+
+Anticipated Examiner Question:
+Q: "What baseline will you compare against for route evaluation?"
+A: "We plan to compare against two baselines: a nearest-neighbour heuristic, which always goes to the closest unvisited doctor, and a manual planning simulation based on typical MR behavior. The percentage improvement over these baselines is what we will report."
+
+
+## SLIDE 10: Architecture
+
+Speaking Points:
+- "At the top, three types of users: MR, Doctor, and Manager. Each gets a role-specific view through the React.js frontend."
+- "The frontend talks to the FastAPI backend through REST APIs. The backend handles authentication, business logic, and coordinates with the ML model and optimizer."
+- "The important architectural decision: the ML model and OR-Tools are separate modules, not a monolithic block. The model scores visits; the optimizer sequences them. They can be tested, tuned, and replaced independently."
+
+Anticipated Examiner Question:
+Q: "What happens when OR-Tools cannot find a feasible solution within the time windows?"
+A: "OR-Tools reports infeasibility. In that case, the system will relax the least important constraint, for example dropping the lowest-priority doctor from the day's plan, and re-run. The MR will see a note indicating which visits could not be scheduled and why."
+
+
+## SLIDE 11: References
+
+Speaking Points:
+- "These are the six core references we have studied. Complete bibliographic details with DOIs will be available in the final report."
+- "If you would like to discuss any specific paper or the methodology behind it, we are happy to go into detail."
+
+
+## SLIDE 12: Project Plan 1.0
+
+Speaking Points:
+- "Our timeline is 17 weeks broken into eight phases. Research and data preparation come first, then ML development, then optimization, then the web layer, then integration and testing."
+- "The biggest risk is in integration, weeks 14 and 15, because that is where all components connect. We have built in two weeks specifically for that."
+- "This is Plan 1.0. We expect to refine it based on your feedback today."
+
+Anticipated Examiner Question:
+Q: "Is 17 weeks realistic for all of this?"
+A: "We believe so. The ML model and the OR-Tools optimizer are well-documented with existing libraries. The frontend and backend use established frameworks. The research and data phases are already underway. Integration is the main risk, and we have allocated dedicated time for it."
+
+
+## SLIDE 13: Thank You
+
+- "To summarize: the problem is manual, inefficient MR visit planning. Our solution combines ML prediction, constraint-based scheduling, and route optimization in one web platform. Thank you for your time. We welcome any questions or suggestions."

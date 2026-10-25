@@ -32,18 +32,10 @@ export default function DoctorList() {
     try {
       setLoading(true);
       const res = await doctorsAPI.list();
-      const raw = res.data.doctors || [];
-      // Enrich doctors with mockup fields if missing
-      const enriched = raw.map((d, i) => ({
-        ...d,
-        doc_code: d.doc_code || `D${101 + i}`,
-        prescription_volume: d.prescription_volume || (i % 3 === 0 ? 'High' : (i % 2 === 0 ? 'Medium' : 'Low')),
-        last_visit_days: d.last_visit_days || (i * 7 + 5),
-        status: d.status || (i === 4 ? 'on_leave' : 'active'),
-      }));
-      setDoctors(enriched);
+      setDoctors(res.data.doctors || []);
     } catch (err) {
       console.error('Failed to load doctors:', err);
+      showToast('Failed to load doctors from the server', 'error');
     } finally {
       setLoading(false);
     }
@@ -71,9 +63,8 @@ export default function DoctorList() {
       setDoctors((prev) => prev.filter((d) => (d.id !== targetId && d.doc_code !== targetId)));
       showToast(`${docName} removed from network`, 'success');
     } catch (err) {
-      console.warn('API error deleting doctor (falling back locally):', err);
-      setDoctors((prev) => prev.filter((d) => (d.id !== targetId && d.doc_code !== targetId)));
-      showToast(`${docName} removed from network`, 'success');
+      console.error('API error deleting doctor:', err);
+      showToast(err?.response?.data?.detail || `Failed to remove ${docName}`, 'error');
     } finally {
       setDeletingDoctor(null);
     }

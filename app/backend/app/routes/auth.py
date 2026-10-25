@@ -1,14 +1,23 @@
 """Authentication endpoints — login and register."""
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.models.schemas import LoginRequest, LoginResponse, RegisterRequest
-from app.auth.jwt_handler import hash_password, verify_password, create_access_token
+from app.auth.jwt_handler import (
+    create_access_token,
+    get_current_user,
+    hash_password,
+    verify_password,
+)
 from app.db import get_supabase
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(req: RegisterRequest):
+@limiter.limit("5/minute")
+async def register(request: Request, req: RegisterRequest):
     """Register a new user (MR or Manager)."""
     sb = get_supabase()
 
@@ -49,7 +58,8 @@ async def register(req: RegisterRequest):
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(req: LoginRequest):
+@limiter.limit("10/minute")
+async def login(request: Request, req: LoginRequest):
     """Authenticate user and return JWT token."""
     sb = get_supabase()
 
@@ -101,10 +111,6 @@ async def login(req: LoginRequest):
 
 
 @router.get("/me")
-async def get_me(credentials=None):
-    """Return the current authenticated user info from token."""
-    from app.auth.jwt_handler import get_current_user
-    from fastapi import Depends
-
-    # This is handled via dependency injection in the actual call
-    return {"message": "Use this endpoint with a Bearer token"}
+async def get_me(user: dict = Depends(get_current_user)):
+    """Return the current authenticated user's token claims."""
+    return {"user": user}

@@ -7,7 +7,7 @@ Supports:
 """
 import os
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, List
 import httpx
 from dotenv import load_dotenv
@@ -24,12 +24,21 @@ DEFAULT_TEST_RECIPIENT = os.getenv("WHATSAPP_TEST_RECIPIENT", "+919876543210")
 TEST_NOTIFICATION_LOG: List[Dict] = []
 
 
+def _clean_phone(phone_number: str) -> str:
+    clean_phone = "".join(filter(str.isdigit, phone_number or ""))
+    if not 8 <= len(clean_phone) <= 15:
+        raise ValueError("Phone number must contain 8 to 15 digits")
+    return clean_phone
+
+
 def generate_direct_whatsapp_url(phone_number: str, message: str) -> str:
     """
     Generate a direct wa.me link that opens WhatsApp directly without any API or verification.
     Strikes all spaces/symbols from phone number.
     """
-    clean_phone = "".join(filter(str.isdigit, phone_number))
+    clean_phone = _clean_phone(phone_number)
+    if not message or not message.strip():
+        raise ValueError("Message cannot be empty")
     encoded_message = urllib.parse.quote(message)
     return f"https://wa.me/{clean_phone}?text={encoded_message}"
 
@@ -99,8 +108,15 @@ async def send_sandbox_whatsapp_message(
     Send via Twilio WhatsApp Sandbox (test-only number) or simulate automated delivery.
     Strictly uses test number, zero business verification needed.
     """
-    clean_to = to_number if to_number.startswith("whatsapp:") else f"whatsapp:{to_number}"
-    timestamp = datetime.utcnow().isoformat()
+    clean_digits = _clean_phone(to_number.replace("whatsapp:", ""))
+    expected_digits = _clean_phone(DEFAULT_TEST_RECIPIENT)
+    if clean_digits != expected_digits:
+        raise ValueError("Recipient is not the configured test number")
+    if not message or not message.strip():
+        raise ValueError("Message cannot be empty")
+
+    clean_to = f"whatsapp:{clean_digits}"
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     # If Twilio credentials are configured, send live test message
     if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
@@ -118,7 +134,7 @@ async def send_sandbox_whatsapp_message(
                 )
                 data = resp.json()
                 record = {
-                    "id": f"wa_{int(datetime.utcnow().timestamp())}",
+                    "id": f"wa_{int(datetime.now(timezone.utc).timestamp())}",
                     "to": clean_to,
                     "body": message,
                     "template": template_type,
@@ -131,7 +147,7 @@ async def send_sandbox_whatsapp_message(
                 return record
         except Exception as e:
             record = {
-                "id": f"wa_err_{int(datetime.utcnow().timestamp())}",
+                "id": f"wa_err_{int(datetime.now(timezone.utc).timestamp())}",
                 "to": clean_to,
                 "body": message,
                 "template": template_type,
@@ -145,7 +161,7 @@ async def send_sandbox_whatsapp_message(
 
     # Pure Sandbox / Test Simulation (Instant & 100% reliable without any API key setup)
     record = {
-        "id": f"wa_test_{int(datetime.utcnow().timestamp())}",
+        "id": f"wa_test_{int(datetime.now(timezone.utc).timestamp())}",
         "to": clean_to,
         "body": message,
         "template": template_type,

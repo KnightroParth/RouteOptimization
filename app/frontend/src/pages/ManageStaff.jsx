@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { staffAPI } from '../services/api';
 import {
   Users, UserPlus, Trash2, Pencil, CheckCircle2, XCircle,
@@ -51,13 +52,12 @@ export default function ManageStaff() {
 
   // Action feedback
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState(null);
 
   useEffect(() => { loadStaff(); }, []);
 
   const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
+    if (type === 'error') toast.error(msg);
+    else toast.success(msg);
   };
 
   const loadStaff = async () => {
@@ -167,13 +167,6 @@ export default function ManageStaff() {
 
   return (
     <div className="manage-staff-page">
-      {/* Toast */}
-      {toast && (
-        <div className={`staff-toast ${toast.type}`}>
-          {toast.type === 'success' ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
-          {toast.msg}
-        </div>
-      )}
 
       {/* Page Header */}
       <div className="page-header">

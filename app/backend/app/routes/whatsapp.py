@@ -58,7 +58,10 @@ async def get_direct_link(
     user: dict = Depends(get_current_user),
 ):
     """Generate direct zero-verification wa.me link."""
-    url = generate_direct_whatsapp_url(phone, message)
+    try:
+        url = generate_direct_whatsapp_url(phone, message)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"url": url}
 
 
@@ -73,11 +76,14 @@ async def send_test_message(
     if not payload.message:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
-    result = await send_sandbox_whatsapp_message(
-        to_number=payload.to_number,
-        message=payload.message,
-        template_type=payload.template_type or "custom",
-    )
+    try:
+        result = await send_sandbox_whatsapp_message(
+            to_number=payload.to_number,
+            message=payload.message,
+            template_type=payload.template_type or "custom",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {
         "success": True,
         "detail": "Test notification processed via test sandbox",

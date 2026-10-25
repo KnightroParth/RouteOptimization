@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { dashboardAPI, visitsAPI, routesAPI } from '../services/api';
-import { mockGeneratedRoute, mockVisits } from '../services/mockData';
 import {
   CalendarDays, CheckCircle2, Clock, AlertTriangle,
   MapPin, Route as RouteIcon, Loader2, Fuel, Users,
@@ -16,10 +15,11 @@ export default function MRDashboard() {
   const today = new Date().toISOString().split('T')[0];
 
   const [stats, setStats] = useState(null);
-  const [visits, setVisits] = useState(mockVisits);
-  const [route, setRoute] = useState(mockGeneratedRoute);
+  const [visits, setVisits] = useState([]);
+  const [route, setRoute] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -33,17 +33,16 @@ export default function MRDashboard() {
         visitsAPI.daily(mrId, today),
         routesAPI.generate({ mr_id: mrId, plan_date: today }),
       ]);
+      setError('');
       setStats(statsRes.data);
-      const validVisits = visitsRes.data?.visits?.length > 0 ? visitsRes.data.visits : mockVisits;
-      setVisits(validVisits);
-      const validRoute = (routeRes.data?.stops?.length > 0 || routeRes.data?.route_polyline?.length > 0)
-        ? routeRes.data
-        : mockGeneratedRoute;
-      setRoute(validRoute);
+      setVisits(visitsRes.data?.visits || []);
+      setRoute(routeRes.data || null);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
-      setVisits(mockVisits);
-      setRoute(mockGeneratedRoute);
+      setError('Unable to load today\'s dashboard from the server.');
+      setStats(null);
+      setVisits([]);
+      setRoute(null);
     } finally {
       setLoading(false);
     }
@@ -55,8 +54,10 @@ export default function MRDashboard() {
     try {
       const res = await routesAPI.generate({ mr_id: mrId, plan_date: today });
       setRoute(res.data);
+      setError('');
     } catch (err) {
       console.error('Route generation failed:', err);
+      setError('Route optimization failed. Check the visit schedule and try again.');
     } finally {
       setGenerating(false);
     }
@@ -94,7 +95,7 @@ export default function MRDashboard() {
     { doctor: 'Dr. Vikram Patil', specialty: 'Dermatologist', window: '04:00 PM - 06:00 PM', score: '0.34 (Low)', scoreClass: 'low', confidence: '81%' },
   ];
 
-  const totalDistance = route?.total_distance_km || 28.4;
+  const totalDistance = route?.total_distance_km || 0;
   const fuelEstimate = (totalDistance * 0.03).toFixed(2); // 30 km/L standard two-wheeler
 
   return (
@@ -120,6 +121,8 @@ export default function MRDashboard() {
         </div>
       </div>
 
+      {error && <div className="alert-error-banner mb-4">{error}</div>}
+
       {/* KPI Summary Cards */}
       <div className="stats-grid mb-4">
         <div className="stat-card">
@@ -127,7 +130,7 @@ export default function MRDashboard() {
             <span className="stat-card-label">Assigned Doctors</span>
             <div className="stat-card-icon"><Users size={16} /></div>
           </div>
-          <div className="stat-card-value">145</div>
+          <div className="stat-card-value">{stats?.total_visits ?? 0}</div>
           <div className="stat-card-subtitle">{visits.length} scheduled on today's beat</div>
         </div>
 
@@ -136,7 +139,7 @@ export default function MRDashboard() {
             <span className="stat-card-label">High Priority Visits</span>
             <div className="stat-card-icon"><AlertTriangle size={16} /></div>
           </div>
-          <div className="stat-card-value text-danger">12</div>
+          <div className="stat-card-value text-danger">{stats?.high_priority_visits ?? 0}</div>
           <div className="stat-card-subtitle">Priority score &gt; 0.70</div>
         </div>
 

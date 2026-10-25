@@ -13,20 +13,41 @@ async def list_visits(
     mr_id: Optional[str] = Query(None),
     date: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(50, ge=1, le=200, description="Results per page"),
     user: dict = Depends(get_current_user),
 ):
-    """List visits with optional filters."""
+    """List visits with optional filters and pagination."""
+    if user.get("role") == "mr":
+        if mr_id and mr_id != user.get("mr_id"):
+            raise HTTPException(status_code=403, detail="Not authorized for this representative")
+        mr_id = user.get("mr_id")
+
     sb = get_supabase()
-    query = sb.table("visits").select("*, doctors(name, specialization, latitude, longitude)")
+
+    # Count query
+    count_query = sb.table("visits").select("id", count="exact")
+    # Data query
+    data_query = sb.table("visits").select("*, doctors(name, specialization, latitude, longitude)")
 
     if mr_id:
-        query = query.eq("mr_id", mr_id)
+        count_query = count_query.eq("mr_id", mr_id)
+        data_query = data_query.eq("mr_id", mr_id)
     if date:
-        query = query.eq("visit_date", date)
+        count_query = count_query.eq("visit_date", date)
+        data_query = data_query.eq("visit_date", date)
     if status:
-        query = query.eq("status", status)
+        count_query = count_query.eq("status", status)
+        data_query = data_query.eq("status", status)
 
-    result = query.order("visit_date", desc=True).execute()
+    # Get total count
+    count_result = count_query.execute()
+    total = count_result.count if count_result.count is not None else len(count_result.data or [])
+
+    # Apply pagination
+    offset = (page - 1) * limit
+    data_query = data_query.order("visit_date", desc=True).range(offset, offset + limit - 1)
+    result = data_query.execute()
 
     # Flatten the joined doctor data
     visits = []
@@ -38,7 +59,13 @@ async def list_visits(
         v["doctor_longitude"] = doctor.get("longitude")
         visits.append(v)
 
-    return {"visits": visits}
+    return {
+        "visits": visits,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": max(1, (total + limit - 1) // limit),
+    }
 
 
 @router.get("/daily")
@@ -48,6 +75,9 @@ async def get_daily_visits(
     user: dict = Depends(get_current_user),
 ):
     """Get all visits for an MR on a specific date with priority predictions."""
+    if user.get("role") == "mr" and user.get("mr_id") != mr_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this representative")
+
     sb = get_supabase()
 
     # Fetch visits with doctor and priority data
@@ -94,6 +124,9 @@ async def get_daily_visits(
 @router.post("/", status_code=201)
 async def create_visit(visit: VisitCreate, user: dict = Depends(get_current_user)):
     """Create a new visit."""
+    if user.get("role") == "mr" and user.get("mr_id") != visit.mr_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this representative")
+
     sb = get_supabase()
     result = sb.table("visits").insert(visit.model_dump()).execute()
 
@@ -136,6 +169,8 @@ async def update_visit(
     update_data = {k: v for k, v in update.model_dump().items() if v is not None}
     if "status" in update_data and hasattr(update_data["status"], "value"):
         update_data["status"] = update_data["status"].value
+    if "notes" in update_data:
+        update_data["field_notes"] = update_data.pop("notes")
 
     result = (
         sb.table("visits")

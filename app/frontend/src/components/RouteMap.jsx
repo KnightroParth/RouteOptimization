@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF, PolylineF, InfoWindowF } from '@react-google-maps/api';
-import { mockGeneratedRoute, mockVisits } from '../services/mockData';
 
 const containerStyle = {
   width: '100%',
@@ -9,22 +8,17 @@ const containerStyle = {
 };
 
 export default function RouteMap({ route, visits = [], center = { lat: 18.5204, lng: 73.8567 } }) {
+  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDuPXC5543bzlypo_9p-scoIRxSasKCOjM',
+    googleMapsApiKey: mapsApiKey || '',
   });
 
   const [map, setMap] = useState(null);
   const [activeMarker, setActiveMarker] = useState(null);
 
-  // Guarantee high-fidelity fallback if route or visits are empty or missing
-  const activeRoute = (route?.route_polyline?.length > 0 || route?.stops?.length > 0)
-    ? route
-    : mockGeneratedRoute;
-
-  const activeVisits = (visits && visits.length > 0)
-    ? visits
-    : mockVisits;
+  const activeRoute = route;
+  const activeVisits = visits;
 
   const hasRoute = Boolean(activeRoute?.route_polyline?.length > 0 || activeRoute?.stops?.length > 0);
   const hasVisits = Boolean(activeVisits && activeVisits.length > 0);
@@ -77,6 +71,10 @@ export default function RouteMap({ route, visits = [], center = { lat: 18.5204, 
       map.fitBounds(bounds);
     }
   }, [allPositions, map]);
+
+  if (!mapsApiKey) {
+    return <div className="alert-error-banner">Maps configuration is missing.</div>;
+  }
 
   if (!isLoaded) return <div className="page-loader">Loading Maps...</div>;
 

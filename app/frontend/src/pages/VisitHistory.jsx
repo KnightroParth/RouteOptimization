@@ -1,106 +1,60 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import {
   ClipboardList, CheckCircle2, XCircle, Clock, Calendar,
   Search, Filter, FileText, ArrowUpDown, Plus, Pencil, Trash2, X, AlertCircle
 } from 'lucide-react';
 import LogVisitModal from '../components/LogVisitModal';
 import EditVisitModal from '../components/EditVisitModal';
-import { visitsAPI } from '../services/api';
-
-const INITIAL_RECORDS = [
-  {
-    id: 201,
-    date: 'Sep 11, 2026',
-    doctor: 'Dr. Anand Sharma',
-    specialty: 'Cardiologist',
-    planned: '10:00 AM',
-    actual: '10:15 AM',
-    outcome: 'Visited',
-    notes: 'Delivered Cardivol 50mg samples. Physician agreed to switch 5 hypertensive patients on trial.',
-  },
-  {
-    id: 202,
-    date: 'Sep 11, 2026',
-    doctor: 'Dr. Rajesh Mehta',
-    specialty: 'General Physician',
-    planned: '11:30 AM',
-    actual: '11:45 AM',
-    outcome: 'Visited',
-    notes: 'Detailed discussion on Azithral dosage schedules during monsoon seasonal flu spike.',
-  },
-  {
-    id: 203,
-    date: 'Sep 10, 2026',
-    doctor: 'Dr. Sneha Kulkarni',
-    specialty: 'Orthopedic',
-    planned: '02:00 PM',
-    actual: '02:10 PM',
-    outcome: 'Visited',
-    notes: 'Delivered joint supplement sample kits. Inquired about upcoming national orthopedics symposium.',
-  },
-  {
-    id: 204,
-    date: 'Sep 10, 2026',
-    doctor: 'Dr. Vikram Joshi',
-    specialty: 'Oncology',
-    planned: '03:45 PM',
-    actual: '—',
-    outcome: 'Missed',
-    notes: 'Emergency oncology surgery underway at hospital. Receptionist requested rescheduling for Thursday morning.',
-  },
-  {
-    id: 205,
-    date: 'Sep 09, 2026',
-    doctor: 'Dr. Priya Deshmukh',
-    specialty: 'Pediatrician',
-    planned: '09:30 AM',
-    actual: '09:30 AM',
-    outcome: 'Visited',
-    notes: 'Regular monthly detailing on pediatric fever drops. Prescription volume remains consistent.',
-  },
-  {
-    id: 206,
-    date: 'Sep 09, 2026',
-    doctor: 'Dr. Vikram Patil',
-    specialty: 'Dermatologist',
-    planned: '11:15 AM',
-    actual: '—',
-    outcome: 'Missed',
-    notes: 'Doctor was on medical leave. Verified with clinic staff.',
-  },
-  {
-    id: 207,
-    date: 'Sep 08, 2026',
-    doctor: 'Dr. Sunita Deshmukh',
-    specialty: 'General Medicine',
-    planned: '04:00 PM',
-    actual: '04:05 PM',
-    outcome: 'Visited',
-    notes: 'Presented trial efficacy studies on diabetes combination therapy. Very positive reception.',
-  },
-  {
-    id: 208,
-    date: 'Sep 07, 2026',
-    doctor: 'Dr. Rohan Patel',
-    specialty: 'Diabetology',
-    planned: '05:30 PM',
-    actual: '05:40 PM',
-    outcome: 'Visited',
-    notes: 'Follow-up regarding clinical trial brochure and patient education leaflets.',
-  },
-];
+import { doctorsAPI, visitsAPI } from '../services/api';
 
 export default function VisitHistory() {
+  const { user } = useAuth();
+  const mrId = user?.mr_id;
   const [filterPeriod, setFilterPeriod] = useState('7days');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [historyRecords, setHistoryRecords] = useState(INITIAL_RECORDS);
+  const [historyRecords, setHistoryRecords] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // CRUD Modals
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!mrId) return;
+    const loadHistory = async () => {
+      try {
+        setLoading(true);
+        const [visitsResponse, doctorsResponse] = await Promise.all([
+          visitsAPI.list({ mr_id: mrId }),
+          doctorsAPI.list(),
+        ]);
+        const records = (visitsResponse.data?.visits || []).map((visit) => ({
+          id: visit.id,
+          doctor_id: visit.doctor_id,
+          date: visit.visit_date,
+          doctor: visit.doctor_name || 'Unknown Doctor',
+          specialty: visit.doctor_specialization || 'General',
+          planned: visit.planned_time || '—',
+          actual: visit.actual_arrival || '—',
+          outcome: visit.status === 'completed' ? 'Visited' : visit.status === 'missed' ? 'Missed' : visit.status,
+          notes: visit.outcome || visit.field_notes || '',
+        }));
+        setHistoryRecords(records);
+        setDoctors(doctorsResponse.data?.doctors || []);
+      } catch (err) {
+        console.error('Failed to load visit history:', err);
+        showToast('Unable to load visit history from the server', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadHistory();
+  }, [mrId]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -111,6 +65,10 @@ export default function VisitHistory() {
     setHistoryRecords((prev) => [newRecord, ...prev]);
     showToast(`Visit for ${newRecord.doctor} logged successfully`);
   };
+
+  if (loading) {
+    return <div className="page-loader">Loading visit history...</div>;
+  }
 
   const handleVisitUpdated = (updatedRecord) => {
     setHistoryRecords((prev) =>
@@ -128,9 +86,8 @@ export default function VisitHistory() {
       setHistoryRecords((prev) => prev.filter((r) => r.id !== deletingRecord.id));
       showToast(`Visit record for ${docName} deleted`, 'success');
     } catch (err) {
-      console.warn('Delete error (fallback):', err);
-      setHistoryRecords((prev) => prev.filter((r) => r.id !== deletingRecord.id));
-      showToast(`Visit record for ${docName} deleted`, 'success');
+      console.error('Delete error:', err);
+      showToast(err?.response?.data?.detail || `Failed to delete visit record for ${docName}`, 'error');
     } finally {
       setDeletingRecord(null);
     }
@@ -388,6 +345,8 @@ export default function VisitHistory() {
         isOpen={isLogModalOpen}
         onClose={() => setIsLogModalOpen(false)}
         onVisitLogged={handleVisitLogged}
+        doctors={doctors}
+        mrId={mrId}
       />
 
       {/* Edit Visit Modal */}

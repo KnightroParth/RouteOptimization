@@ -1,0 +1,359 @@
+# Review-1 Presentation Script
+
+## Opening — Before Slide 1
+
+Good morning respected HOD ma'am/sir, respected project coordinator, guide, reviewers, and everyone present here.
+
+We are Group 19 from the Artificial Intelligence and Data Science department.
+
+I am Bhakti Jayantilal Gundecha, and along with my team members Parth Lokhande and Udaykiran Bitla, we are presenting our proposed final-year project titled:
+
+**“AI-Based Medical Representative Visit Prioritization and Route Optimization System.”**
+
+Our project focuses on a practical field-level problem faced by Medical Representatives — deciding **which doctors to visit, when to visit them, and in what order they should be visited**.
+
+---
+
+# Slide 2 — Problem Statement
+
+Before explaining our solution, I would like to explain the problem we are trying to solve.
+
+A Medical Representative, or MR, usually has to visit multiple doctors within a particular territory.
+
+The difficulty is that every doctor may have different requirements.
+
+For example, one doctor may have higher visit priority, another doctor may only be available during a particular time window, while another doctor may be geographically far away.
+
+In many planning situations, the daily visit schedule can depend heavily on manual planning, previous experience or familiar routes.
+
+This can lead to several problems such as repeated travel, inefficient routes, difficulty in prioritizing doctors, and limited visibility for managers.
+
+So our main problem statement is:
+
+**“How can AI and optimization techniques be used to automatically prioritize doctor visits and generate an efficient daily visit schedule for a Medical Representative?”**
+
+This is the core problem our project attempts to solve.
+
+---
+
+# Slide 3 — Motivation
+
+Now, why did we select this problem?
+
+Let us consider a simple example.
+
+Suppose one Medical Representative has ten doctors to potentially visit in a day.
+
+Doctor A and Doctor C may have high priority.
+
+Doctor D may only be available after 4 PM.
+
+Doctor E may be 12 kilometres away from the base.
+
+And Doctor F may be only one kilometre away from Doctor A.
+
+If we manually create the route, we may consider only one or two of these factors.
+
+But the actual planning problem requires us to consider **priority, availability, distance, travel time and visit duration together**.
+
+This is where our motivation comes from.
+
+We want to combine three technologies:
+
+**Artificial Intelligence for visit prioritization, appointment constraints for scheduling, and route optimization for deciding the best sequence of visits.**
+
+Therefore, instead of depending only on experience or habit, our system attempts to make the planning process **data-driven and systematic**.
+
+There is also research and industrial evidence showing that pharmaceutical sales-force scheduling and routing are genuine optimization problems, which further motivated us to work on this domain.
+
+---
+
+# Slide 4 — Aim and Objectives
+
+Our aim is:
+
+**To develop an AI-assisted web application that prioritizes Medical Representative doctor visits and generates optimized daily visit routes while considering appointment availability, visit duration and travel constraints.**
+
+To achieve this aim, we have defined five major objectives.
+
+First, we will manage doctor, MR, appointment and visit information.
+
+Second, we will develop a machine-learning model to predict the priority of a planned doctor visit.
+
+Third, we will use Google OR-Tools to generate an optimized sequence of visits.
+
+Fourth, we will provide role-based dashboards for Medical Representatives and managers.
+
+And finally, we will evaluate the system using both machine-learning metrics and route-optimization metrics.
+
+An important point here is that **our AI is not intended to diagnose patients or predict medical treatment**.
+
+The AI is specifically focused on **visit prioritization**.
+
+---
+
+# Slide 5 — Literature Review
+
+We studied existing work from five major areas.
+
+The first is pharmaceutical sales-force scheduling, where mathematical optimization has been used for deciding sales representatives' activities.
+
+The second is pharmaceutical representative routing, particularly routing with time-window constraints.
+
+The third is appointment or priority prediction using machine learning.
+
+The fourth is Vehicle Routing Problems with Time Windows, commonly known as VRPTW.
+
+And the fifth is existing field-force or CRM software.
+
+From this review, we observed that these areas are often addressed separately.
+
+For example, one approach may focus mainly on routing, another may focus on prediction, while commercial field-force systems may focus more on operational management.
+
+Our proposed system attempts to integrate these components.
+
+The key idea is:
+
+**ML prediction → appointment constraints → route optimization → web application → manager analytics.**
+
+So our project is not claiming that route optimization or field-force management is a completely new problem.
+
+Instead, our contribution is the **integration of predictive visit prioritization and constraint-based route optimization into a single domain-specific web platform.**
+
+---
+
+# Slide 6 — Abstract / System Overview
+
+Now I will briefly explain the complete system.
+
+Our system starts with historical doctor and visit-related data.
+
+This data is preprocessed and given to a Random Forest model.
+
+The model produces a priority score for each planned doctor visit.
+
+For example:
+
+Doctor A may receive a priority score of 0.91, while Doctor B may receive 0.62.
+
+This priority information is then combined with appointment constraints such as:
+
+* doctor availability,
+* visit duration,
+* MR working hours,
+* and geographical information.
+
+These constraints are given to the Google OR-Tools optimization engine.
+
+The optimizer then solves a Vehicle Routing Problem with Time Windows and generates an appropriate sequence of visits.
+
+Finally, the optimized plan is displayed through the web dashboard.
+
+So the complete flow is:
+
+**Historical Data → Preprocessing → ML Priority Prediction → Priority Score → Appointment Constraints → Route Optimization → Daily MR Plan → Dashboard and Reports.**
+
+This is the central workflow of our project.
+
+---
+
+# Slide 7 — Requirements, Test Environment and Tools
+
+For development, we are planning to use a standard development environment.
+
+For hardware, an Intel i5 or equivalent processor, 8 GB RAM, and SSD storage should be sufficient for development, with 16 GB RAM being preferable.
+
+For the software stack, Python will be our primary programming language.
+
+For the frontend, we are proposing React.js.
+
+For the backend and REST APIs, we will use FastAPI.
+
+MySQL will be used for storing application data.
+
+For machine learning, we will use Scikit-learn.
+
+Pandas and NumPy will be used for data preprocessing and numerical operations.
+
+And for route optimization, we will use Google OR-Tools.
+
+For development and version control, we will use Visual Studio Code and Git/GitHub.
+
+The final system is planned as a web-based application that can subsequently be deployed on a cloud platform.
+
+---
+
+# Slide 8 — Proposed System
+
+Now I will explain how the proposed system will actually work.
+
+The first layer is historical data.
+
+This may contain doctor information, visit history, appointment information and other operational features.
+
+Next comes data preprocessing and feature engineering.
+
+The processed information is provided to the machine-learning model.
+
+Our primary model is Random Forest, which will generate a visit-priority score.
+
+After that, we apply appointment constraints.
+
+For example:
+
+A doctor may only be available from 10 AM to 12 PM.
+
+The MR may have working hours from 9 AM to 6 PM.
+
+Each doctor may require approximately a particular amount of visit time.
+
+All these constraints are considered by the optimization engine.
+
+Google OR-Tools will then generate the optimized sequence.
+
+Finally, the Medical Representative receives a daily visit plan through the dashboard.
+
+---
+
+# Slide 9 — Proposed Outcome
+
+We also need a proper way to determine whether our proposed system is actually successful.
+
+So we have divided evaluation into three categories.
+
+First is **ML evaluation**.
+
+We will use metrics such as accuracy, precision, recall and F1-score as appropriate for the final classification setup.
+
+Second is **route evaluation**.
+
+Here we will compare the optimized route against a baseline or manual planning approach.
+
+We will consider:
+
+* total travel distance,
+* travel time,
+* number of visits completed,
+* late appointments,
+* waiting time,
+* and improvement over the baseline.
+
+Third is **system evaluation**.
+
+We will test API response time, appointment creation, dashboard functionality and role-based access.
+
+You can see an illustrative comparison on the slide.
+
+However, I would like to clarify that the values shown there are **planning targets or illustrative values, not our achieved results**.
+
+The actual improvement will only be reported after implementation and testing.
+
+This is important because we want our final results to be based on measured experimental evidence.
+
+---
+
+# Slide 10 — Architecture
+
+Now coming to the system architecture.
+
+At the top, we have three types of users:
+
+**Medical Representative, Doctor and Manager.**
+
+They interact with the system through the React.js frontend.
+
+The frontend communicates with the FastAPI backend through REST APIs.
+
+The backend handles authentication, appointment management, business logic and communication with the AI and optimization modules.
+
+MySQL stores doctors, Medical Representatives, appointments and visit history.
+
+The Random Forest engine is responsible for predicting the visit-priority score.
+
+The Google OR-Tools engine then performs the route optimization using the priority and operational constraints.
+
+Finally, the optimized information is displayed through the manager dashboard and analytics module.
+
+So technically, the important point is:
+
+**The ML model makes the priority prediction, while OR-Tools solves the scheduling and routing problem.**
+
+They are two different components working together.
+
+---
+
+# Slide 11 — References
+
+For this project, we have referred to research related to:
+
+pharmaceutical sales-force scheduling,
+
+pharmaceutical representative routing,
+
+stochastic orienteering and time-window problems,
+
+mathematical programming for sales-force assignment,
+
+machine-learning-based priority prediction,
+
+and Google OR-Tools documentation for Vehicle Routing Problems with Time Windows.
+
+These references helped us understand both the real-world problem and the technical methods required to address it.
+
+In our final report, we will provide the complete bibliographic details and links/DOIs wherever available.
+
+---
+
+# Slide 12 — Project Plan 1.0
+
+Finally, this is our initial project implementation plan.
+
+During Weeks 1 and 2, we will complete research and finalize the problem definition.
+
+Weeks 3 and 4 will focus on dataset acquisition and preprocessing.
+
+Weeks 5 to 7 will focus on feature engineering, model development and evaluation.
+
+Weeks 8 and 9 will be dedicated to the OR-Tools optimization engine.
+
+Weeks 10 and 11 will focus on FastAPI and MySQL backend development.
+
+Weeks 12 and 13 will be used for the React frontend and dashboards.
+
+Weeks 14 and 15 will be dedicated to integrating the ML model, backend and optimizer.
+
+Finally, Weeks 16 and 17 will focus on testing, deployment and documentation.
+
+This is our **Project Plan 1.0**, and we will refine it based on the feedback received during this review.
+
+---
+
+# Closing
+
+So, to summarize our proposed project:
+
+The problem we are addressing is inefficient and manual planning of Medical Representative doctor visits.
+
+Our solution combines:
+
+**Machine Learning for visit prioritization,**
+
+**constraint-based scheduling,**
+
+**Google OR-Tools for route optimization,**
+
+and
+
+**a web-based dashboard for Medical Representatives and managers.**
+
+The expected result is a system that can transform a manually planned visit schedule into a **data-driven and optimized daily plan**.
+
+Our main technical contribution is not simply developing a route planner or a CRM.
+
+It is integrating:
+
+**Prediction + Constraints + Optimization + Web Application**
+
+into one complete system for the Medical Representative workflow.
+
+We believe this project is feasible within our final-year project timeline and provides sufficient scope for Artificial Intelligence, Machine Learning, optimization, backend development, database management and deployment.

@@ -5,7 +5,7 @@ from app.auth.jwt_handler import get_current_user
 from app.services.priority import predict_batch
 from app.services.optimizer import optimize_route
 from app.db import get_supabase
-from datetime import datetime
+from datetime import date, datetime
 
 router = APIRouter()
 
@@ -16,6 +16,9 @@ async def generate_route(req: RouteGenerateRequest, user: dict = Depends(get_cur
     Generate an optimized daily route for an MR.
     Steps: fetch visits → predict priorities → build matrix → solve VRPTW → store result.
     """
+    if user.get("role") == "mr" and user.get("mr_id") != req.mr_id:
+        raise HTTPException(status_code=403, detail="Not authorized for this representative")
+
     sb = get_supabase()
 
     # 1. Get MR profile
@@ -49,14 +52,48 @@ async def generate_route(req: RouteGenerateRequest, user: dict = Depends(get_cur
             message="No visits found for the given date and MR",
         )
 
-    # 3. Flatten visit data and predict priorities
+    # 3. Compute visit recency for each doctor from completed visits
+    doctor_ids = []
+    for v in visit_result.data:
+        doc = v.get("doctors") or {}
+        did = doc.get("id") or v.get("doctor_id")
+        if did:
+            doctor_ids.append(did)
+
+    recency_map = {}  # doctor_id -> days since last completed visit
+    frequency_map = {}  # doctor_id -> count of completed visits
+    if doctor_ids:
+        try:
+            history = (
+                sb.table("visits")
+                .select("doctor_id, visit_date")
+                .eq("mr_id", req.mr_id)
+                .eq("status", "completed")
+                .in_("doctor_id", list(set(doctor_ids)))
+                .order("visit_date", desc=True)
+                .execute()
+            )
+            for row in history.data or []:
+                did = row["doctor_id"]
+                frequency_map[did] = frequency_map.get(did, 0) + 1
+                if did not in recency_map:
+                    try:
+                        last_date = date.fromisoformat(row["visit_date"])
+                        recency_map[did] = (date.today() - last_date).days
+                    except (ValueError, TypeError):
+                        pass
+        except Exception:
+            pass  # Fall back to defaults if query fails
+
+    # 4. Flatten visit data and predict priorities
     visits_for_prediction = []
     for v in visit_result.data:
         doctor = v.get("doctors") or {}
+        did = doctor.get("id") or v.get("doctor_id")
         visit_enriched = {
             "id": v["id"],
             "visit_id": v["id"],
-            "doctor_id": doctor.get("id") or v.get("doctor_id"),
+            "doctor_id": did,
             "doctor_name": doctor.get("name"),
             "doctor_specialization": doctor.get("specialization"),
             "latitude": doctor.get("latitude"),
@@ -66,8 +103,8 @@ async def generate_route(req: RouteGenerateRequest, user: dict = Depends(get_cur
             "typical_visit_duration": doctor.get("typical_visit_duration", 30),
             "priority_category": doctor.get("priority_category"),
             "follow_up_required": v.get("follow_up_required", False),
-            "days_since_last_visit": 30,  # TODO: compute from history
-            "visit_frequency": 2,
+            "days_since_last_visit": recency_map.get(did, 90),
+            "visit_frequency": frequency_map.get(did, 0),
         }
         visits_for_prediction.append(visit_enriched)
 
@@ -125,8 +162,8 @@ async def generate_route(req: RouteGenerateRequest, user: dict = Depends(get_cur
                     "service_duration": stop.get("service_duration", 30),
                 }).execute()
     except Exception as e:
-        route_id = None
         print(f"Failed to save route: {e}")
+        raise HTTPException(status_code=500, detail="Failed to persist generated route") from e
 
     return RouteResponse(
         id=route_id,
@@ -150,6 +187,9 @@ async def get_route(route_id: str, user: dict = Depends(get_current_user)):
     route = sb.table("routes").select("*").eq("id", route_id).execute()
     if not route.data:
         raise HTTPException(status_code=404, detail="Route not found")
+
+    if user.get("role") == "mr" and route.data[0].get("mr_id") != user.get("mr_id"):
+        raise HTTPException(status_code=403, detail="Not authorized for this route")
 
     stops = (
         sb.table("route_stops")

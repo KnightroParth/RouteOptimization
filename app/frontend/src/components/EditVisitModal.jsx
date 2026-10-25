@@ -62,14 +62,8 @@ export default function EditVisitModal({ isOpen, onClose, record, onVisitUpdated
       if (onVisitUpdated) onVisitUpdated(updated);
       onClose();
     } catch (err) {
-      console.warn('API error updating visit (fallback locally):', err);
-      const updated = {
-        ...record,
-        ...formData,
-        actual: formData.outcome === 'Missed' ? '—' : formData.actual,
-      };
-      if (onVisitUpdated) onVisitUpdated(updated);
-      onClose();
+      console.error('API error updating visit:', err);
+      setError(err?.response?.data?.detail || 'Unable to update visit. Please try again.');
     } finally {
       setSubmitting(false);
     }
