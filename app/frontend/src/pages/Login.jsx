@@ -20,7 +20,17 @@ export default function Login() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+      const status = err.response?.status;
+      const detail = err.response?.data?.detail;
+      if (status === 503 || status === 500) {
+        setError(detail || 'Database service temporarily unavailable. If using Supabase free tier, check if your project is paused.');
+      } else if (status === 401) {
+        setError(detail || 'Invalid email or password. Please check your credentials.');
+      } else if (err.code === 'ERR_NETWORK' || err.message?.includes('Network')) {
+        setError('Network error: Cannot reach the backend API server.');
+      } else {
+        setError(detail || err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }

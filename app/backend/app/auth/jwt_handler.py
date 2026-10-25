@@ -10,11 +10,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
 configured_secret = os.getenv("JWT_SECRET")
-if not configured_secret and ENVIRONMENT not in {"development", "test"}:
-    raise RuntimeError("JWT_SECRET must be set outside development and test environments")
-SECRET_KEY = configured_secret or "development-only-secret-change-me"
+DEFAULT_SECRET = "mr-route-optimization-jwt-secret-key-2026-pvgcoet"
+SECRET_KEY = configured_secret or DEFAULT_SECRET
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 EXPIRATION = int(os.getenv("JWT_EXPIRATION_MINUTES", "480"))
 

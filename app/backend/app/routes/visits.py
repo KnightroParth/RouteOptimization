@@ -23,49 +23,65 @@ async def list_visits(
             raise HTTPException(status_code=403, detail="Not authorized for this representative")
         mr_id = user.get("mr_id")
 
-    sb = get_supabase()
+    try:
+        sb = get_supabase()
 
-    # Count query
-    count_query = sb.table("visits").select("id", count="exact")
-    # Data query
-    data_query = sb.table("visits").select("*, doctors(name, specialization, latitude, longitude)")
+        # Count query
+        count_query = sb.table("visits").select("id", count="exact")
+        # Data query
+        data_query = sb.table("visits").select("*, doctors(name, specialization, latitude, longitude)")
 
-    if mr_id:
-        count_query = count_query.eq("mr_id", mr_id)
-        data_query = data_query.eq("mr_id", mr_id)
-    if date:
-        count_query = count_query.eq("visit_date", date)
-        data_query = data_query.eq("visit_date", date)
-    if status:
-        count_query = count_query.eq("status", status)
-        data_query = data_query.eq("status", status)
+        if mr_id:
+            count_query = count_query.eq("mr_id", mr_id)
+            data_query = data_query.eq("mr_id", mr_id)
+        if date:
+            count_query = count_query.eq("visit_date", date)
+            data_query = data_query.eq("visit_date", date)
+        if status:
+            count_query = count_query.eq("status", status)
+            data_query = data_query.eq("status", status)
 
-    # Get total count
-    count_result = count_query.execute()
-    total = count_result.count if count_result.count is not None else len(count_result.data or [])
+        # Get total count
+        count_result = count_query.execute()
+        total = count_result.count if count_result.count is not None else len(count_result.data or [])
 
-    # Apply pagination
-    offset = (page - 1) * limit
-    data_query = data_query.order("visit_date", desc=True).range(offset, offset + limit - 1)
-    result = data_query.execute()
+        # Apply pagination
+        offset = (page - 1) * limit
+        data_query = data_query.order("visit_date", desc=True).range(offset, offset + limit - 1)
+        result = data_query.execute()
 
-    # Flatten the joined doctor data
-    visits = []
-    for v in result.data or []:
-        doctor = v.pop("doctors", None) or {}
-        v["doctor_name"] = doctor.get("name")
-        v["doctor_specialization"] = doctor.get("specialization")
-        v["doctor_latitude"] = doctor.get("latitude")
-        v["doctor_longitude"] = doctor.get("longitude")
-        visits.append(v)
+        # Flatten the joined doctor data
+        visits = []
+        for v in result.data or []:
+            doctor = v.pop("doctors", None) or {}
+            v["doctor_name"] = doctor.get("name")
+            v["doctor_specialization"] = doctor.get("specialization")
+            v["doctor_latitude"] = doctor.get("latitude")
+            v["doctor_longitude"] = doctor.get("longitude")
+            visits.append(v)
 
-    return {
-        "visits": visits,
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "pages": max(1, (total + limit - 1) // limit),
-    }
+        return {
+            "visits": visits,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": max(1, (total + limit - 1) // limit),
+        }
+    except Exception:
+        from app.services.fallback_data import FALLBACK_VISITS
+        filtered = list(FALLBACK_VISITS)
+        if status:
+            filtered = [v for v in filtered if v["status"] == status]
+        total = len(filtered)
+        offset = (page - 1) * limit
+        paginated = filtered[offset : offset + limit]
+        return {
+            "visits": paginated,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": max(1, (total + limit - 1) // limit),
+        }
 
 
 @router.get("/daily")

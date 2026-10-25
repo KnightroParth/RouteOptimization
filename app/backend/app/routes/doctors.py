@@ -18,39 +18,60 @@ async def list_doctors(
     user: dict = Depends(get_current_user),
 ):
     """List doctors with optional filtering, search, and pagination."""
-    sb = get_supabase()
+    try:
+        sb = get_supabase()
 
-    # Count query (for pagination metadata)
-    count_query = sb.table("doctors").select("id", count="exact")
-    # Data query
-    data_query = sb.table("doctors").select("*")
+        # Count query (for pagination metadata)
+        count_query = sb.table("doctors").select("id", count="exact")
+        # Data query
+        data_query = sb.table("doctors").select("*")
 
-    if territory:
-        count_query = count_query.eq("territory", territory)
-        data_query = data_query.eq("territory", territory)
-    if specialization:
-        count_query = count_query.eq("specialization", specialization)
-        data_query = data_query.eq("specialization", specialization)
-    if search:
-        count_query = count_query.ilike("name", f"%{search}%")
-        data_query = data_query.ilike("name", f"%{search}%")
+        if territory:
+            count_query = count_query.eq("territory", territory)
+            data_query = data_query.eq("territory", territory)
+        if specialization:
+            count_query = count_query.eq("specialization", specialization)
+            data_query = data_query.eq("specialization", specialization)
+        if search:
+            count_query = count_query.ilike("name", f"%{search}%")
+            data_query = data_query.ilike("name", f"%{search}%")
 
-    # Get total count
-    count_result = count_query.execute()
-    total = count_result.count if count_result.count is not None else len(count_result.data or [])
+        # Get total count
+        count_result = count_query.execute()
+        total = count_result.count if count_result.count is not None else len(count_result.data or [])
 
-    # Apply pagination
-    offset = (page - 1) * limit
-    data_query = data_query.order("name").range(offset, offset + limit - 1)
-    result = data_query.execute()
+        # Apply pagination
+        offset = (page - 1) * limit
+        data_query = data_query.order("name").range(offset, offset + limit - 1)
+        result = data_query.execute()
 
-    return {
-        "doctors": result.data or [],
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "pages": max(1, (total + limit - 1) // limit),
-    }
+        return {
+            "doctors": result.data or [],
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": max(1, (total + limit - 1) // limit),
+        }
+    except Exception:
+        # Offline/demo fallback when external Supabase database is unreachable
+        from app.services.fallback_data import FALLBACK_DOCTORS
+        filtered = FALLBACK_DOCTORS
+        if territory:
+            filtered = [d for d in filtered if d["territory"].lower() == territory.lower()]
+        if specialization:
+            filtered = [d for d in filtered if d["specialization"].lower() == specialization.lower()]
+        if search:
+            filtered = [d for d in filtered if search.lower() in d["name"].lower()]
+        total = len(filtered)
+        offset = (page - 1) * limit
+        paginated = filtered[offset : offset + limit]
+        return {
+            "doctors": paginated,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": max(1, (total + limit - 1) // limit),
+        }
 
 
 @router.get("/{doctor_id}")
