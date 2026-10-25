@@ -61,6 +61,56 @@ async def register(request: Request, req: RegisterRequest):
 @limiter.limit("10/minute")
 async def login(request: Request, req: LoginRequest):
     """Authenticate user and return JWT token."""
+    # Fast path for demo accounts — instant authentication without database latency
+    demo_accounts = {
+        "mr@demo.com": {
+            "id": "e4a1a5b8-1111-4444-9999-111111111111",
+            "name": "Parth Lokhande",
+            "role": "mr",
+            "mr_id": "d1a1a5b8-1111-4444-9999-111111111111",
+        },
+        "manager@demo.com": {
+            "id": "e4a1a5b8-2222-4444-9999-222222222222",
+            "name": "Rajesh Mehta",
+            "role": "manager",
+            "mr_id": None,
+        },
+        "mr2@demo.com": {
+            "id": "e4a1a5b8-3333-4444-9999-333333333333",
+            "name": "Bhakti Gundecha",
+            "role": "mr",
+            "mr_id": "d1a1a5b8-3333-4444-9999-333333333333",
+        },
+        "mr3@demo.com": {
+            "id": "e4a1a5b8-4444-4444-9999-444444444444",
+            "name": "Udaykiran Bitla",
+            "role": "mr",
+            "mr_id": "d1a1a5b8-4444-4444-9999-444444444444",
+        },
+    }
+    if req.email in demo_accounts and req.password == "demo123":
+        demo_user = demo_accounts[req.email]
+        token = create_access_token(
+            {
+                "sub": demo_user["id"],
+                "email": req.email,
+                "role": demo_user["role"],
+                "name": demo_user["name"],
+                "mr_id": demo_user["mr_id"],
+            }
+        )
+        return LoginResponse(
+            access_token=token,
+            token_type="bearer",
+            user={
+                "id": demo_user["id"],
+                "email": req.email,
+                "name": demo_user["name"],
+                "role": demo_user["role"],
+                "mr_id": demo_user["mr_id"],
+            },
+        )
+
     sb = get_supabase()
 
     # Fetch user by email
@@ -74,55 +124,6 @@ async def login(request: Request, req: LoginRequest):
     except HTTPException:
         raise
     except Exception as exc:
-        # Fallback for demo accounts if live Supabase database is unreachable/paused
-        demo_accounts = {
-            "mr@demo.com": {
-                "id": "e4a1a5b8-1111-4444-9999-111111111111",
-                "name": "Parth Lokhande",
-                "role": "mr",
-                "mr_id": "d1a1a5b8-1111-4444-9999-111111111111",
-            },
-            "manager@demo.com": {
-                "id": "e4a1a5b8-2222-4444-9999-222222222222",
-                "name": "Rajesh Mehta",
-                "role": "manager",
-                "mr_id": None,
-            },
-            "mr2@demo.com": {
-                "id": "e4a1a5b8-3333-4444-9999-333333333333",
-                "name": "Bhakti Gundecha",
-                "role": "mr",
-                "mr_id": "d1a1a5b8-3333-4444-9999-333333333333",
-            },
-            "mr3@demo.com": {
-                "id": "e4a1a5b8-4444-4444-9999-444444444444",
-                "name": "Udaykiran Bitla",
-                "role": "mr",
-                "mr_id": "d1a1a5b8-4444-4444-9999-444444444444",
-            },
-        }
-        if req.email in demo_accounts and req.password == "demo123":
-            demo_user = demo_accounts[req.email]
-            token = create_access_token(
-                {
-                    "sub": demo_user["id"],
-                    "email": req.email,
-                    "role": demo_user["role"],
-                    "name": demo_user["name"],
-                    "mr_id": demo_user["mr_id"],
-                }
-            )
-            return LoginResponse(
-                access_token=token,
-                token_type="bearer",
-                user={
-                    "id": demo_user["id"],
-                    "email": req.email,
-                    "name": demo_user["name"],
-                    "role": demo_user["role"],
-                    "mr_id": demo_user["mr_id"],
-                },
-            )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Database temporarily unreachable. If your Supabase project is paused, please restore it in supabase.com/dashboard.",

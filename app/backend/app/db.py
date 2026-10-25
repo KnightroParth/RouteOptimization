@@ -12,7 +12,11 @@ DEFAULT_SUPABASE_KEY = (
     "NjkzMCwiZXhwIjoyMTA3MTEyOTMwfQ.86HVPl9Ex_0VxEK3XzPwImoVrtZ-ta5iJ2q-hNDpUy0"
 )
 
+import time
+
 _supabase: Client | None = None
+_db_status: bool | None = None
+_last_check_time: float = 0.0
 
 
 def get_supabase() -> Client:
@@ -27,3 +31,19 @@ def get_supabase() -> Client:
         )
         _supabase = create_client(url, key)
     return _supabase
+
+
+def is_db_reachable() -> bool:
+    """Check if the database is reachable, cached for 60 seconds to avoid DNS timeouts."""
+    global _db_status, _last_check_time
+    now = time.time()
+    if _db_status is not None and (now - _last_check_time < 60.0):
+        return _db_status
+    try:
+        sb = get_supabase()
+        sb.table("users").select("id").limit(1).execute()
+        _db_status = True
+    except Exception:
+        _db_status = False
+    _last_check_time = now
+    return _db_status

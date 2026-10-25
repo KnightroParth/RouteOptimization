@@ -1,7 +1,7 @@
 """Dashboard data endpoints for MR and Manager views."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.auth.jwt_handler import get_current_user, require_role
-from app.db import get_supabase
+from app.db import get_supabase, is_db_reachable
 
 router = APIRouter()
 

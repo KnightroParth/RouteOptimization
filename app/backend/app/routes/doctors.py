@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Optional
 from app.models.schemas import DoctorCreate, DoctorResponse, DoctorUpdate
 from app.auth.jwt_handler import get_current_user
-from app.db import get_supabase
+from app.db import get_supabase, is_db_reachable
 
 router = APIRouter()
 
