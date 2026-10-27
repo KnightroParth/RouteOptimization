@@ -45,8 +45,14 @@ async def list_doctors(
         data_query = data_query.order("name").range(offset, offset + limit - 1)
         result = data_query.execute()
 
+        doctors_data = result.data or []
+        for d in doctors_data:
+            if not d.get("doc_code") and d.get("id"):
+                clean = str(d["id"]).replace("-", "")[:6].upper()
+                d["doc_code"] = f"DOC-{clean}"
+
         return {
-            "doctors": result.data or [],
+            "doctors": doctors_data,
             "total": total,
             "page": page,
             "limit": limit,
@@ -65,6 +71,10 @@ async def list_doctors(
         total = len(filtered)
         offset = (page - 1) * limit
         paginated = filtered[offset : offset + limit]
+        for d in paginated:
+            if not d.get("doc_code") and d.get("id"):
+                clean = str(d["id"]).replace("-", "")[:6].upper()
+                d["doc_code"] = f"DOC-{clean}"
         return {
             "doctors": paginated,
             "total": total,
@@ -82,7 +92,11 @@ async def get_doctor(doctor_id: str, user: dict = Depends(get_current_user)):
 
     if not result.data:
         raise HTTPException(status_code=404, detail="Doctor not found")
-    return result.data[0]
+    doc = result.data[0]
+    if not doc.get("doc_code") and doc.get("id"):
+        clean = str(doc["id"]).replace("-", "")[:6].upper()
+        doc["doc_code"] = f"DOC-{clean}"
+    return doc
 
 
 @router.post("/", status_code=201)

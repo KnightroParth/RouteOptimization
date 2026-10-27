@@ -70,11 +70,34 @@ export default function DoctorList() {
     }
   };
 
-  const filtered = doctors.filter((d) =>
-    (d.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (d.specialization || d.specialty || '').toLowerCase().includes(search.toLowerCase()) ||
-    (d.territory || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const formatDoctorId = (doc) => {
+    const code = doc?.doc_code || doc?.id;
+    if (!code) return 'DOC-01';
+    const str = String(code).trim();
+    if (/^doc-\d+$/i.test(str)) {
+      return str.toUpperCase();
+    }
+    if (/^DOC-[A-Z0-9]{4,8}$/i.test(str)) {
+      return str.toUpperCase();
+    }
+    if (str.includes('-') || str.length > 8) {
+      const clean = str.replace(/[^a-zA-Z0-9]/g, '');
+      return `DOC-${clean.slice(0, 6).toUpperCase()}`;
+    }
+    return str.startsWith('D') ? str : `D${str}`;
+  };
+
+  const filtered = doctors.filter((d) => {
+    const term = search.toLowerCase();
+    const docIdFormatted = formatDoctorId(d).toLowerCase();
+    return (
+      (d.name || '').toLowerCase().includes(term) ||
+      (d.specialization || d.specialty || '').toLowerCase().includes(term) ||
+      (d.territory || '').toLowerCase().includes(term) ||
+      (d.id || '').toLowerCase().includes(term) ||
+      docIdFormatted.includes(term)
+    );
+  });
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
   const paginatedDoctors = filtered.slice(
@@ -166,7 +189,7 @@ export default function DoctorList() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th style={{ width: 80 }}>ID</th>
+                  <th style={{ width: 110, whiteSpace: 'nowrap' }}>ID</th>
                   <th>Doctor Name</th>
                   <th>Specialty</th>
                   <th>Zone / Territory</th>
@@ -179,9 +202,35 @@ export default function DoctorList() {
               <tbody>
                 {paginatedDoctors.map((doc) => (
                   <tr key={doc.id || doc.doc_code}>
-                    <td>
-                      <span className="text-muted font-mono small fw-semibold">
-                        {doc.doc_code || `D${doc.id}`}
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <span
+                        className="badge-doc-id"
+                        title={`Doctor UUID: ${doc.id}\nClick to copy full ID`}
+                        onClick={() => {
+                          if (doc.id && navigator?.clipboard) {
+                            navigator.clipboard.writeText(doc.id);
+                            showToast(`Copied ${formatDoctorId(doc)} ID`);
+                          }
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: '#f1f5f9',
+                          color: '#334155',
+                          border: '1px solid #e2e8f0',
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.03em',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          userSelect: 'all',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {formatDoctorId(doc)}
                       </span>
                     </td>
                     <td>
