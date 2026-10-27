@@ -61,59 +61,9 @@ async def register(request: Request, req: RegisterRequest):
 @limiter.limit("10/minute")
 async def login(request: Request, req: LoginRequest):
     """Authenticate user and return JWT token."""
-    # Fast path for demo accounts — instant authentication without database latency
-    demo_accounts = {
-        "mr@demo.com": {
-            "id": "e4a1a5b8-1111-4444-9999-111111111111",
-            "name": "Parth Lokhande",
-            "role": "mr",
-            "mr_id": "d1a1a5b8-1111-4444-9999-111111111111",
-        },
-        "manager@demo.com": {
-            "id": "e4a1a5b8-2222-4444-9999-222222222222",
-            "name": "Rajesh Mehta",
-            "role": "manager",
-            "mr_id": None,
-        },
-        "mr2@demo.com": {
-            "id": "e4a1a5b8-3333-4444-9999-333333333333",
-            "name": "Bhakti Gundecha",
-            "role": "mr",
-            "mr_id": "d1a1a5b8-3333-4444-9999-333333333333",
-        },
-        "mr3@demo.com": {
-            "id": "e4a1a5b8-4444-4444-9999-444444444444",
-            "name": "Udaykiran Bitla",
-            "role": "mr",
-            "mr_id": "d1a1a5b8-4444-4444-9999-444444444444",
-        },
-    }
-    if req.email in demo_accounts and req.password == "demo123":
-        demo_user = demo_accounts[req.email]
-        token = create_access_token(
-            {
-                "sub": demo_user["id"],
-                "email": req.email,
-                "role": demo_user["role"],
-                "name": demo_user["name"],
-                "mr_id": demo_user["mr_id"],
-            }
-        )
-        return LoginResponse(
-            access_token=token,
-            token_type="bearer",
-            user={
-                "id": demo_user["id"],
-                "email": req.email,
-                "name": demo_user["name"],
-                "role": demo_user["role"],
-                "mr_id": demo_user["mr_id"],
-            },
-        )
-
     sb = get_supabase()
 
-    # Fetch user by email
+    # 1. Try authenticating against live database
     try:
         result = sb.table("users").select("*").eq("email", req.email).execute()
         if not result.data:
@@ -121,47 +71,97 @@ async def login(request: Request, req: LoginRequest):
         user = result.data[0]
         if not verify_password(req.password, user["password_hash"]):
             raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        # Fetch MR profile if applicable
+        mr_id = None
+        if user["role"] == "mr":
+            mr_result = (
+                sb.table("medical_representatives")
+                .select("id")
+                .eq("user_id", user["id"])
+                .execute()
+            )
+            if mr_result.data:
+                mr_id = mr_result.data[0]["id"]
+
+        # Create JWT
+        token = create_access_token(
+            {
+                "sub": user["id"],
+                "email": user["email"],
+                "role": user["role"],
+                "name": user["name"],
+                "mr_id": mr_id,
+            }
+        )
+
+        return LoginResponse(
+            access_token=token,
+            token_type="bearer",
+            user={
+                "id": user["id"],
+                "email": user["email"],
+                "name": user["name"],
+                "role": user["role"],
+                "mr_id": mr_id,
+            },
+        )
     except HTTPException:
         raise
     except Exception as exc:
+        # Fallback to demo accounts only if database connection fails
+        demo_accounts = {
+            "mr@demo.com": {
+                "id": "871d5597-1678-4f5a-aa33-0ffca6dcdcbc",
+                "name": "Parth Lokhande",
+                "role": "mr",
+                "mr_id": "e47e41a3-c517-4af7-a6fd-004f908f7185",
+            },
+            "manager@demo.com": {
+                "id": "fde8d462-48dd-4b31-83ee-09c19125d534",
+                "name": "Rajesh Mehta",
+                "role": "manager",
+                "mr_id": None,
+            },
+            "mr2@demo.com": {
+                "id": "6a62ebbd-d8f4-40d9-b6f2-40cdeb7d71dd",
+                "name": "Bhakti Gundecha",
+                "role": "mr",
+                "mr_id": "f00cb353-d292-45b0-a274-9cad4c702110",
+            },
+            "mr3@demo.com": {
+                "id": "0269eb42-e1d8-47ad-a90f-bdb0b1ec3ffa",
+                "name": "Udaykiran Bitla",
+                "role": "mr",
+                "mr_id": "3d9957db-0bdf-440d-8d4b-2985464a3296",
+            },
+        }
+        if req.email in demo_accounts and req.password == "demo123":
+            demo_user = demo_accounts[req.email]
+            token = create_access_token(
+                {
+                    "sub": demo_user["id"],
+                    "email": req.email,
+                    "role": demo_user["role"],
+                    "name": demo_user["name"],
+                    "mr_id": demo_user["mr_id"],
+                }
+            )
+            return LoginResponse(
+                access_token=token,
+                token_type="bearer",
+                user={
+                    "id": demo_user["id"],
+                    "email": req.email,
+                    "name": demo_user["name"],
+                    "role": demo_user["role"],
+                    "mr_id": demo_user["mr_id"],
+                },
+            )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Database temporarily unreachable. If your Supabase project is paused, please restore it in supabase.com/dashboard.",
+            detail="Database temporarily unreachable.",
         )
-
-    # Fetch MR profile if applicable
-    mr_id = None
-    if user["role"] == "mr":
-        mr_result = (
-            sb.table("medical_representatives")
-            .select("id")
-            .eq("user_id", user["id"])
-            .execute()
-        )
-        if mr_result.data:
-            mr_id = mr_result.data[0]["id"]
-
-    # Create JWT
-    token = create_access_token(
-        {
-            "sub": user["id"],
-            "email": user["email"],
-            "role": user["role"],
-            "name": user["name"],
-            "mr_id": mr_id,
-        }
-    )
-
-    return LoginResponse(
-        access_token=token,
-        user={
-            "id": user["id"],
-            "email": user["email"],
-            "name": user["name"],
-            "role": user["role"],
-            "mr_id": mr_id,
-        },
-    )
 
 
 @router.get("/me")
